@@ -1,0 +1,123 @@
+<xml>
+	<protocol>
+		<id>0</id>
+		<name>Undecoded</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>1</id>
+		<name>RFU</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>2</id>
+		<name>Byron SX</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>3</id>
+		<name>RSL</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>4</id>
+		<name>Lightning4</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>5</id>
+		<name>FineOffset / Viking</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>6</id>
+		<name>Rubicson</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>7</id>
+		<name>AE Blyss</name>
+		<state>0</state>
+	</protocol>
+	<active>no</active>
+	<protocol>
+		<id>8</id>
+		<name>Blinds T1/T2/T3/T4</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>9</id>
+		<name>Blinds T0</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>10</id>
+		<name>ProGuard</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>11</id>
+		<name>FS20</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>12</id>
+		<name>La Crosse</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>13</id>
+		<name>Hideki / UPM</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>14</id>
+		<name>AD Lightwave RF</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>15</id>
+		<name>Mertik</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>16</id>
+		<name>Visonic</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>17</id>
+		<name>ATI</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>18</id>
+		<name>Oregon Scientific</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>19</id>
+		<name>Meiantech</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>20</id>
+		<name>HomeEasy EU</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>21</id>
+		<name>AC</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>22</id>
+		<name>ARC</name>
+		<state>0</state>
+	</protocol>
+	<protocol>
+		<id>23</id>
+		<name>X10</name>
+		<state>0</state>
+	</protocol>	
+</xml>

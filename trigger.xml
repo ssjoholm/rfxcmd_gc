@@ -1,0 +1,14 @@
+<xml>
+<trigger>
+	<message>0D0..000025332000E6F01000000</message>
+	<action>echo TEST</action>
+</trigger>
+<trigger>
+	<message>0A5201................</message>
+	<action>echo "I'm alive"</action>
+</trigger>
+<trigger>
+	<message>0A5201..8E02..........</message>
+	<action>echo Temperature $temperature$</action>
+</trigger>
+</xml>

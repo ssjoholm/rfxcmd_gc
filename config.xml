@@ -1,0 +1,87 @@
+<config>
+	<version>1</version>
+	
+	<!-- Serial -->
+	<serial_active>yes</serial_active>
+	<serial_device>/dev/ttyUSB0</serial_device>
+	<serial_rate>38400</serial_rate>
+	<serial_timeout>9</serial_timeout>
+
+	<!-- Process -->
+	<process_rfxmsg>yes</process_rfxmsg>
+
+	<!-- Daemon -->
+	<daemon_active>no</daemon_active>
+	<daemon_pidfile>/var/run/rfxcmd.pid</daemon_pidfile>
+	
+	<!-- MySQL -->
+	<mysql_active>no</mysql_active>
+	<mysql_server>localhost</mysql_server>
+	<mysql_database>rfx</mysql_database>
+	<mysql_username>rfxuser</mysql_username>
+	<mysql_password>rfxuser1</mysql_password>
+	
+	<!-- PgSQL -->
+	<pgsql_active>no</pgsql_active>
+	<pgsql_server>localhost</pgsql_server>
+	<pgsql_database>rfx</pgsql_database>
+	<pgsql_port>5432</pgsql_port>
+	<pgsql_username>rfxuser</pgsql_username>
+	<pgsql_password>rfxuser1</pgsql_password>
+	<pgsql_table>rfxcmd</pgsql_table> 
+	
+	<!-- Trigger -->
+	<trigger_active>no</trigger_active>
+	<trigger_onematch>no</trigger_onematch>
+	<trigger_file>trigger.xml</trigger_file>
+	<trigger_timeout>10</trigger_timeout>
+	
+	<!-- Sqlite -->
+	<sqlite_active>no</sqlite_active>
+	<sqlite_database>sqlite.db</sqlite_database>
+	<sqlite_table>rfxcmd</sqlite_table>
+	
+	<!-- Logging -->
+	<loglevel>error</loglevel>
+	<logfile>rfxcmd.log</logfile>
+	
+	<!-- Graphite -->
+	<graphite_active>no</graphite_active>
+	<graphite_server>127.0.0.1</graphite_server>
+	<graphite_port>2003</graphite_port>
+	
+	<!-- xPL -->
+	<xpl_active>no</xpl_active>
+	<xpl_host>127.0.0.1</xpl_host>
+	<xpl_sourcename>rfxcmd-</xpl_sourcename>
+	<xpl_includehostname>yes</xpl_includehostname>
+	
+	<!-- Socket server -->
+	<socketserver>yes</socketserver>
+	<sockethost>localhost</sockethost>
+	<socketport>55000</socketport>
+	
+	<!-- Whitelist -->
+	<whitelist_active>no</whitelist_active>
+	<whitelist_file>whitelist.xml</whitelist_file>
+	
+	<!-- Weewx -->
+	<weewx_active>no</weewx_active>          
+	<weewx_config>weewx.xml</weewx_config>
+	
+	<!-- RRD -->
+	<rrd_active>no</rrd_active>
+	<rrd_path></rrd_path>
+	
+	<!-- Barometric adjustemnt, only 0x54 -->
+	<barometric>0</barometric>
+	
+	<!-- Log messages -->
+	<log_msg>no</log_msg>
+	<log_msgfile>msg.log</log_msgfile>
+	
+	<!-- Protocol configuration -->
+	<protocol_startup>no</protocol_startup>
+	<protocol_file>protocol.xml</protocol_file>
+	
+</config>

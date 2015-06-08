@@ -1,0 +1,14 @@
+<xml>
+<sensor>
+	<type>5202</type>
+	<id>1500</id>
+</sensor>
+<sensor>
+	<type>5402</type>
+	<id>1E00</id>
+</sensor>
+<sensor>
+	<type>5402</type>
+	<id>2301</id>
+</sensor>
+</xml>
