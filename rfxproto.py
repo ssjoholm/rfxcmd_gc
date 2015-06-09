@@ -192,7 +192,7 @@ def rfx_setmode(protocol, state):
         try:
             bstr = rfx_decode(result)
             logger.debug("Result: %s", str(bstr))
-        execpt Exception as err:
+        except Exception as err:
             logger.error("Error: %s", str(err))
             raise
 
@@ -236,28 +236,27 @@ def rfx_decode(message):
     """
     Decode RFX message and output the protocol part in a binary string list
     """
-    
+
     logger.debug("RFX_Encode -> BinStr")
-    
-    data = {
-        'packetlen' : ByteToHex(message[0]),
-        'packettype' : ByteToHex(message[1]),
-        'subtype' : ByteToHex(message[2]),
-        'seqnbr' : ByteToHex(message[3]),
-        'cmnd' : ByteToHex(message[4]),
-        'msg1' : ByteToHex(message[5]),
-        'msg2' : ByteToHex(message[6]),
-        'msg3' : ByteToHex(message[7]),
-        'msg4' : ByteToHex(message[8]),
-        'msg5' : ByteToHex(message[9]),
-        'msg6' : ByteToHex(message[10]),
-        'msg7' : ByteToHex(message[11]),
-        'msg8' : ByteToHex(message[12]),
-        'msg9' : ByteToHex(message[13])
-        }
-    
+
+    data = {\
+        'packetlen' : ByteToHex(message[0]),\
+        'packettype' : ByteToHex(message[1]),\
+        'subtype' : ByteToHex(message[2]),\
+        'seqnbr' : ByteToHex(message[3]),\
+        'cmnd' : ByteToHex(message[4]),\
+        'msg1' : ByteToHex(message[5]),\
+        'msg2' : ByteToHex(message[6]),\
+        'msg3' : ByteToHex(message[7]),\
+        'msg4' : ByteToHex(message[8]),\
+        'msg5' : ByteToHex(message[9]),\
+        'msg6' : ByteToHex(message[10]),\
+        'msg7' : ByteToHex(message[11]),\
+        'msg8' : ByteToHex(message[12]),\
+        'msg9' : ByteToHex(message[13])}
+
     logger.debug("Extract the protocol part")
-    
+
     try:
         msg3_bin = binascii.a2b_hex(data['msg3'])
         msg3_binstr = "".join("{:08b}".format(ord(i)) for i in msg3_bin)
@@ -267,12 +266,12 @@ def rfx_decode(message):
 
     logger.debug("msg3_bin: %s", str(msg3_bin))
     logger.debug("msg3_binstr: %s", str(msg3_binstr))
-    
+
     msg4_bin = binascii.a2b_hex(data['msg4'])
     msg4_binstr = "".join("{:08b}".format(ord(i)) for i in msg4_bin)
     msg5_bin = binascii.a2b_hex(data['msg5'])
     msg5_binstr = "".join("{:08b}".format(ord(i)) for i in msg5_bin)
-    
+
     return list(msg3_binstr + msg4_binstr + msg5_binstr)
 
 # ------------------------------------------------------------------------------
