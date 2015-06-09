@@ -348,7 +348,11 @@ class rfx_data(dict):
 							"02":"group On",
 							"03":"group Off"}
 	
-	rfx_subtype_16 = {"00":"Byron SX"}
+	rfx_subtype_16 = {"00":"Byron SX",
+	                    "01":"Byron MP001",
+	                    "02":"SelectPlus",
+	                    "03":"RFU",
+	                    "04":"Envivo"}
 	
 	rfx_subtype_16_sound = {"01":"Tubular 3 notes",
 							"03":"Big Ben",
