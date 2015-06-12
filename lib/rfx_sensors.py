@@ -646,7 +646,9 @@ class rfx_data(dict):
                         "09":"Viking 02035, 02038",
                         "0A":"Rubicson",
                         "0B":"EW109",
-                        "0C":"Imagintronix Soil Sensor"}
+                        "0C":"Imagintronix Soil Sensor",
+                        "0D":"Alecto WS1700 and compatibles",
+                        "0E":"Alecto WS4500, Auriol H13726, Hama EWS1500, Meteoscan W155/W160,Ventus WS155"}
 
     rfx_subtype_52_humstatus = {"00":"Dry",
                                 "01":"Comfort",
@@ -681,7 +683,8 @@ class rfx_data(dict):
                         "03":"STR918, WGR918, WGR928",
                         "04":"TFA",
                         "05":"UPM WDS500",
-                        "06":"WS2300"}
+                        "06":"WS2300",
+                        "07":"Alecto WS4500, Auriol H13726, Hama EWS1500, Meteoscan W155/W160, Ventus WS155"}
 
     rfx_subtype_57 = {"01":"UVN128, UV138",
                         "02":"UVN800",
