@@ -43,7 +43,8 @@
 	
 	<!-- Logging -->
 	<loglevel>error</loglevel>
-	<logfile>rfxcmd.log</logfile>
+	<logfile>/var/log/rfxcmd.log</logfile>
+	<outputfile>/var/log/output.log</outputfile>
 	
 	<!-- Graphite -->
 	<graphite_active>no</graphite_active>
