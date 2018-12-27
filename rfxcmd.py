@@ -23,9 +23,6 @@
 #   Version history can be found at 
 #   http://code.google.com/p/rfxcmd/wiki/VersionHistory
 #
-#   $Rev: 739 $
-#   $Date: 2014-11-27 08:05:33 +0100 (Thu, 27 Nov 2014) $
-#
 #   NOTES
 #   
 #   RFXCOM is a Trademark of RFSmartLink.
@@ -53,14 +50,12 @@
 __author__ = "Sebastian Sjoholm"
 __copyright__ = "Copyright 2012-2014, Sebastian Sjoholm"
 __license__ = "GPL"
-__version__ = "0.3 (" + filter(str.isdigit, "$Rev: 739 $") + ")"
-__maintainer__ = "Sebastian Sjoholm"
-__email__ = "sebastian.sjoholm@gmail.com"
-__status__ = "Development-Beta-1"
-__date__ = "$Date: 2014-11-27 08:05:33 +0100 (Thu, 27 Nov 2014) $"
+__version__ = "0.4"
+__maintainer__ = "Nicolas Béguier"
+__date__ = "$Date: 2018-12-27 14:05:33 +0100 (Thu, 27 Dec 2018) $"
 
 # Default modules
-import string
+from string import whitespace
 import sys
 import os
 import time
@@ -637,192 +632,192 @@ def decodePacket(message):
     # Verify correct length on packets
     # ---------------------------------------
     logger.debug("Verify correct packet length")
-    if packettype == '00' and len(message) <> 14:
+    if packettype == '00' and len(message) != 14:
+        logger.error("Packet has wrong length, discarding")
+        decoded = True
+        packettype = None
+
+    if packettype == '01' and len(message) != 14 and len(message) != 21:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '01' and len(message) <> 14:
+    if packettype == '02' and len(message) != 5:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '02' and len(message) <> 5:
+    if packettype == '10' and len(message) != 8:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '10' and len(message) <> 8:
+    if packettype == '11' and len(message) != 12:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '11' and len(message) <> 12:
+    if packettype == '12' and len(message) != 9:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '12' and len(message) <> 9:
+    if packettype == '13' and len(message) != 10:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '13' and len(message) <> 10:
+    if packettype == '15' and len(message) != 12:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '15' and len(message) <> 12:
+    if packettype == '16' and len(message) != 8:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '16' and len(message) <> 8:
+    if packettype == '17' and len(message) != 8:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '17' and len(message) <> 8:
+    if packettype == '18' and len(message) != 8:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '18' and len(message) <> 8:
+    if packettype == '19' and len(message) != 10:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '19' and len(message) <> 10:
+    if packettype == '1A' and len(message) != 13:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '1A' and len(message) <> 13:
+    if packettype == '20' and len(message) != 9:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '20' and len(message) <> 9:
+    if packettype == '28' and len(message) != 7:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '28' and len(message) <> 7:
+    if packettype == '30' and len(message) != 7:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '30' and len(message) <> 7:
+    if packettype == '40' and len(message) != 10:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '40' and len(message) <> 10:
+    if packettype == '41' and len(message) != 7:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '41' and len(message) <> 7:
+    if packettype == '42' and len(message) != 9:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '42' and len(message) <> 9:
+    if packettype == '4E' and len(message) != 11:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '4E' and len(message) <> 11:
+    if packettype == '4F' and len(message) != 11:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '4F' and len(message) <> 11:
+    if packettype == '50' and len(message) != 9:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '50' and len(message) <> 9:
+    if packettype == '51' and len(message) != 9:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '51' and len(message) <> 9:
+    if packettype == '52' and len(message) != 11:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '52' and len(message) <> 11:
+    if packettype == '53' and len(message) != 10:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '53' and len(message) <> 10:
+    if packettype == '54' and len(message) != 14:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '54' and len(message) <> 14:
+    if packettype == '55' and len(message) != 12:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '55' and len(message) <> 12:
+    if packettype == '56' and len(message) != 17:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '56' and len(message) <> 17:
+    if packettype == '57' and len(message) != 10:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '57' and len(message) <> 10:
+    if packettype == '58' and len(message) != 14:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '58' and len(message) <> 14:
+    if packettype == '59' and len(message) != 14:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '59' and len(message) <> 14:
+    if packettype == '5A' and len(message) != 18:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '5A' and len(message) <> 18:
+    if packettype == '5B' and len(message) != 20:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '5B' and len(message) <> 20:
+    if packettype == '5C' and len(message) != 16:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '5C' and len(message) <> 16:
+    if packettype == '5D' and len(message) != 9:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '5D' and len(message) <> 9:
+    if packettype == '70' and len(message) != 8:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '70' and len(message) <> 8:
+    if packettype == '71' and len(message) != 11:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
     
-    if packettype == '71' and len(message) <> 11:
-        logger.error("Packet has wrong length, discarding")
-        decoded = True
-        packettype = None
-    
-    if packettype == '72' and len(message) <> 10:
+    if packettype == '72' and len(message) != 10:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
@@ -1095,7 +1090,7 @@ def decodePacket(message):
         indata = ByteToHex(message)
         
         # remove all spaces
-        for x in string.whitespace:
+        for x in whitespace:
             indata = indata.replace(x,"")
         
         indata = indata[4:]
@@ -1485,7 +1480,7 @@ def decodePacket(message):
             logger.info("Seqnbr\t\t\t= %s" % str(seqnbr))
             logger.info("Id\t\t\t= %s" % str(sensor_id))
             
-            if subtype <> '03' and subtype <> '05':
+            if subtype != '03' and subtype != '05':
                 logger.info("Unitcode\t\t= Not used")
                 unitcode = 0
             else:
@@ -1627,7 +1622,7 @@ def decodePacket(message):
             try:
                 sound = rfx.rfx_subtype_16_sound[ByteToHex(message[6])]
             except Exception as err:
-                logger.error("Error: %s", str(err))
+                logger.error(err)
                 sound = "Unknown"
 
         elif subtype == "01":
@@ -1639,7 +1634,7 @@ def decodePacket(message):
         try:
             signal = rfxdecode.decodeSignal(message[7])
         except Exception as err:
-            logger.error("Error: %s", str(err))
+            logger.error(err)
             signal = "Error"
         
         # PRINTOUT
@@ -2572,7 +2567,7 @@ def decodePacket(message):
         barometric_high = clearBit(int(barometric_high,16),7)
         barometric_high = barometric_high << 8
         barometric = ( barometric_high + int(barometric_low,16) )
-        if config.barometric <> 0:
+        if config.barometric != 0:
             barometric = int(barometric) + int(config.barometric)
         forecast = rfx.rfx_subtype_54_forecast[ByteToHex(message[12])]
         signal = rfxdecode.decodeSignal(message[13])
@@ -2688,7 +2683,7 @@ def decodePacket(message):
         raintotal1 = ByteToHex(message[8])
         raintotal2 = ByteToHex(message[9])
         raintotal3 = ByteToHex(message[10])
-        if subtype <> '06':
+        if subtype != '06':
             raintotal = float( (int(raintotal1, 16) * 0x1000) + (int(raintotal2, 16) * 0x100) + int(raintotal3, 16) ) / 10
         else:
             raintotal = 0
@@ -2704,7 +2699,7 @@ def decodePacket(message):
             if subtype == '01' or subtype == '02':
                 logger.info("Rain rate\t\t= " + str(rainrate) + " mm/hr")
             
-            if subtype <> '06':
+            if subtype != '06':
                 logger.info("Raintotal:\t\t= " + str(raintotal) + " mm")
             else:
                 logger.info("Raintotal:\t\t= Not implemented in rfxcmd, need example data")
@@ -2785,7 +2780,7 @@ def decodePacket(message):
         # DATA
         sensor_id = id1 + id2
         direction = ( ( int(ByteToHex(message[6]),16) * 256 ) + int(ByteToHex(message[7]),16) )
-        if subtype <> "05":
+        if subtype != "05":
             av_speed = ( ( int(ByteToHex(message[8]),16) * 256 ) + int(ByteToHex(message[9]),16) ) * 0.1
         else:
             av_speed = 0;
@@ -2807,7 +2802,7 @@ def decodePacket(message):
             logger.info("Seqnbr\t\t\t= " + seqnbr)
             logger.info("Id\t\t\t= " + sensor_id)
             logger.info("Wind direction\t\t= " + str(direction) + " degrees")
-            if subtype <> "05":
+            if subtype != "05":
                 logger.info("Average wind\t\t= " + str(av_speed) + " mtr/sec")
             if subtype == "04":
                 logger.info("Temperature\t\t= " + str(temperature) + " C")
@@ -2837,7 +2832,7 @@ def decodePacket(message):
                     action = action.replace("$subtype$", subtype )
                     action = action.replace("$id$", str(sensor_id) )
                     action = action.replace("$direction$", str(direction) )
-                    if subtype <> "05":
+                    if subtype != "05":
                         action = action.replace("$average$", str(av_speed) )
                     if subtype == "04":
                         action = action.replace("$temperature$", str(temperature) )
@@ -2858,7 +2853,7 @@ def decodePacket(message):
             now = int( time.time() )
             linesg=[]
             linesg.append("%s.%s.direction %s %d" % ( 'rfxcmd', sensor_id, direction,now))
-            if subtype <> "05":
+            if subtype != "05":
                 linesg.append("%s.%s.average %s %d" % ( 'rfxcmd', sensor_id, av_speed,now))
             if subtype == "04":
                 linesg.append("%s.%s.chill %s %d" % ( 'rfxcmd', sensor_id, windchill,now))
@@ -2876,7 +2871,7 @@ def decodePacket(message):
         if config.xpl_active:
             xpl.send(config.xpl_host, 'device=Wind.'+sensor_id+'\ntype=direction\ncurrent='+str(direction)+'\nunits=Degrees', config.xpl_sourcename, config.xpl_includehostname)
             
-            if subtype <> "05":
+            if subtype != "05":
                 xpl.send(config.xpl_host, 'device=Wind.'+sensor_id+'\ntype=Averagewind\ncurrent='+str(av_speed)+'\nunits=mtr/sec', config.xpl_sourcename, config.xpl_includehostname)
             
             if subtype == "04":
@@ -2896,7 +2891,7 @@ def decodePacket(message):
                 if type == sensor_type and id == sensor_id:
                     logger.debug("Weewx action, Sensor type: %s, id: %s" % (str(type), str(id)))
                     wwx.wwx_0x56_direction = direction
-                    if subtype <> "05":
+                    if subtype != "05":
                         wwx.wwx_0x56_avspeed = av_speed
                     else:
                         wwx.wwx_0x56_avspeed = "None"
@@ -3260,7 +3255,7 @@ def decodePacket(message):
             logger.info("Channel 1\t\t= " + str(channel1) + "A")
             logger.info("Channel 2\t\t= " + str(channel2) + "A")
             logger.info("Channel 3\t\t= " + str(channel3) + "A")
-            if total <> 0:
+            if total != 0:
                 logger.info("Total\t\t\t= %s Wh" % str(round(total,1)))
             logger.info("Battery\t\t\t= " + str(battery))
             logger.info("Signal level\t\t= " + str(signal))
@@ -3302,7 +3297,7 @@ def decodePacket(message):
             xpl.send(config.xpl_host, 'device=Current.'+sensor_id+'\ntype=channel1\ncurrent='+str(channel1)+'\nunits=A', config.xpl_sourcename, config.xpl_includehostname)
             xpl.send(config.xpl_host, 'device=Current.'+sensor_id+'\ntype=channel2\ncurrent='+str(channel2)+'\nunits=A', config.xpl_sourcename, config.xpl_includehostname)
             xpl.send(config.xpl_host, 'device=Current.'+sensor_id+'\ntype=channel3\ncurrent='+str(channel3)+'\nunits=A', config.xpl_sourcename, config.xpl_includehostname)
-            if total <> 0:
+            if total != 0:
                 xpl.send(config.xpl_host, 'device=Current.'+sensor_id+'\ntype=total\ncurrent='+str(total)+'\nunits=Wh', config.xpl_sourcename, config.xpl_includehostname)
             xpl.send(config.xpl_host, 'device=Current.'+sensor_id+'\ntype=battery\ncurrent='+str(battery*10)+'\nunits=%', config.xpl_sourcename, config.xpl_includehostname)
             xpl.send(config.xpl_host, 'device=Current.'+sensor_id+'\ntype=signal\ncurrent='+str(signal*10)+'\nunits=%', config.xpl_sourcename, config.xpl_includehostname)
@@ -3801,7 +3796,7 @@ def read_rfx():
             logger.debug("Message: " + str(ByteToHex(message)))
             
             # First byte indicate length of message, must be other than 00
-            if ByteToHex(message[0]) <> "00":
+            if ByteToHex(message[0]) != "00":
             
                 # Verify length
                 logger.debug("Verify length")
@@ -3991,7 +3986,7 @@ def option_simulate(indata):
     """
 
     # Remove all spaces
-    for x in string.whitespace:
+    for x in whitespace:
         indata = indata.replace(x,"")
     
     # Cut into hex chunks
