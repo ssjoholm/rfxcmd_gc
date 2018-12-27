@@ -66,13 +66,17 @@ import optparse
 import time
 import binascii
 import fcntl
+import traceback
 
 # Serial
 try:
     import serial
 except ImportError as err:
-    print("Error: %s" % str(err))
+    print(err)
     sys.exit(1)
+
+# Debug
+from pdb import set_trace as st
 
 # ------------------------------------------------------------------------------
 class rfxcmd_data:
@@ -160,10 +164,10 @@ def readbytes(number):
         try:
             byte = s.device.read()
         except IOError as err:
-            print("Error: %s" % str(err))
+            logger.error(err)
             return False
         except OSError as err:
-            print("Error: %s" % str(err))
+            logger.error(err)
             return False
         buf += byte
     return buf
@@ -180,8 +184,7 @@ def rfx_setmode(protocol, state):
         result = rfx_sendmsg(r.status)
         logger.debug("Result: %s", str(result))
     except Exception as err:
-        logger.debug("Error: %s", str(err))
-        print "Error: Could not send message: %s " % str(err)
+        logger.error(err)
         raise
 
     logger.debug("Result: %s", str(ByteToHex(result)))
@@ -193,7 +196,7 @@ def rfx_setmode(protocol, state):
             bstr = rfx_decode(result)
             logger.debug("Result: %s", str(bstr))
         except Exception as err:
-            logger.error("Error: %s", str(err))
+            logger.error(err)
             raise
 
         logger.debug("Binary: %s" % str(bstr))
@@ -222,13 +225,13 @@ def rfx_setmode(protocol, state):
         try:
             rfx_decodestatus(rfx_sendmsg(command.upper()))
         except Exception as err:
-            logger.error("Error: %s", str(err))
+            logger.error(err)
             raise
 
         return True
 
     else:
-        print("Invalid result received")
+        logger.error("Invalid result received")
         return False
 
 # ------------------------------------------------------------------------------
@@ -261,7 +264,7 @@ def rfx_decode(message):
         msg3_bin = binascii.a2b_hex(data['msg3'])
         msg3_binstr = "".join("{:08b}".format(ord(i)) for i in msg3_bin)
     except Exception as err:
-        logger.error("Error: %s", str(err))
+        logger.error(err)
         raise
 
     logger.debug("msg3_bin: %s", str(msg3_bin))
@@ -296,134 +299,134 @@ def rfx_decodestatus(message):
         'msg9' : ByteToHex(message[13])
         }
     
-    print("RFX protocols")
-    print("-------------------------------------------------------------------")
-    print("#\tProtocol\t\t\tState")
-    print("-------------------------------------------------------------------")
+    logger.info("RFX protocols")
+    logger.info("-------------------------------------------------------------------")
+    logger.info("#\tProtocol\t\t\tState")
+    logger.info("-------------------------------------------------------------------")
     
     # MSG 3
         
     if testBit(int(data['msg3'],16),7) == 128:
-        print("0\tUndecoded\t\t\tEnabled")
+        logger.info("0\tUndecoded\t\t\tEnabled")
     else:
-        print("0\tUndecoded\t\t\tDisabled")
+        logger.info("0\tUndecoded\t\t\tDisabled")
         
     if testBit(int(data['msg3'],16),6) == 64:
-        print("1\tRFU\t\t\t\tEnabled")
+        logger.info("1\tRFU\t\t\t\tEnabled")
     else:
-        print("1\tRFU\t\t\t\tDisabled")
+        logger.info("1\tRFU\t\t\t\tDisabled")
         
     if testBit(int(data['msg3'],16),5) == 32:
-        print("2\tByrox SX\t\t\tEnabled")
+        logger.info("2\tByrox SX\t\t\tEnabled")
     else:
-        print("2\tByrox SX\t\t\tDisabled")
+        logger.info("2\tByrox SX\t\t\tDisabled")
         
     if testBit(int(data['msg3'],16),4) == 16:
-        print("3\tRSL\t\t\t\tEnabled")
+        logger.info("3\tRSL\t\t\t\tEnabled")
     else:
-        print("3\tRSL\t\t\t\tDisabled")
+        logger.info("3\tRSL\t\t\t\tDisabled")
         
     if testBit(int(data['msg3'],16),3) == 8:
-        print("4\tLightning4\t\t\tEnabled")
+        logger.info("4\tLightning4\t\t\tEnabled")
     else:
-        print("4\tLightning4\t\t\tDisabled")
+        logger.info("4\tLightning4\t\t\tDisabled")
         
     if testBit(int(data['msg3'],16),2) == 4:
-        print("5\tFineOffset/Viking\t\tEnabled")
+        logger.info("5\tFineOffset/Viking\t\tEnabled")
     else:
-        print("5\tFineOffset/Viking\t\tDisabled")
+        logger.info("5\tFineOffset/Viking\t\tDisabled")
         
     if testBit(int(data['msg3'],16),1) == 2:
-        print("6\tRubicson\t\t\tEnabled")
+        logger.info("6\tRubicson\t\t\tEnabled")
     else:
-        print("6\tRubicson\t\t\tDisabled")
+        logger.info("6\tRubicson\t\t\tDisabled")
     
     if testBit(int(data['msg3'],16),0) == 1:
-        print("7\tAE Blyss\t\t\tEnabled")
+        logger.info("7\tAE Blyss\t\t\tEnabled")
     else:
-        print("7\tAE Blyss\t\t\tDisabled")
+        logger.info("7\tAE Blyss\t\t\tDisabled")
     
     # MSG 4
     if testBit(int(data['msg4'],16),6) == 128:
-        print("8\tBlindsT1/T2/T3/T4\t\tEnabled")
+        logger.info("8\tBlindsT1/T2/T3/T4\t\tEnabled")
     else:
-        print("8\tBlindsT1/T2/T3/T4\t\tDisabled")
+        logger.info("8\tBlindsT1/T2/T3/T4\t\tDisabled")
         
     if testBit(int(data['msg4'],16),6) == 64:
-        print("9\tBlindsT0\t\t\tEnabled")
+        logger.info("9\tBlindsT0\t\t\tEnabled")
     else:
-        print("9\tBlindsT0\t\t\tDisabled")
+        logger.info("9\tBlindsT0\t\t\tDisabled")
     
     if testBit(int(data['msg4'],16),5) == 32:
-        print("10\tProGuard\t\t\tEnabled")
+        logger.info("10\tProGuard\t\t\tEnabled")
     else:
-        print("10\tProGuard\t\t\tDisabled")
+        logger.info("10\tProGuard\t\t\tDisabled")
         
     if testBit(int(data['msg4'],16),4) == 16:
-        print("11\tFS20\t\t\t\tEnabled")
+        logger.info("11\tFS20\t\t\t\tEnabled")
     else:
-        print("11\tFS20\t\t\t\tDisabled")
+        logger.info("11\tFS20\t\t\t\tDisabled")
     
     if testBit(int(data['msg4'],16),3) == 8:
-        print("12\tLa Crosse\t\t\tEnabled")
+        logger.info("12\tLa Crosse\t\t\tEnabled")
     else:
-        print("12\tLa Crosse\t\t\tDisabled")
+        logger.info("12\tLa Crosse\t\t\tDisabled")
         
     if testBit(int(data['msg4'],16),2) == 4:
-        print("13\tHideki/UPM\t\t\tEnabled")
+        logger.info("13\tHideki/UPM\t\t\tEnabled")
     else:
-        print("13\tHideki/UPM\t\t\tDisabled")
+        logger.info("13\tHideki/UPM\t\t\tDisabled")
         
     if testBit(int(data['msg4'],16),1) == 2:
-        print("14\tAD LightwaveRF\t\t\tEnabled")
+        logger.info("14\tAD LightwaveRF\t\t\tEnabled")
     else:
-        print("14\tAD LightwaveRF\t\t\tDisabled")
+        logger.info("14\tAD LightwaveRF\t\t\tDisabled")
     
     if testBit(int(data['msg4'],16),0) == 1:
-        print("15\tMertik\t\t\t\tEnabled")
+        logger.info("15\tMertik\t\t\t\tEnabled")
     else:
-        print("15\tMertik\t\t\t\tDisabled")
+        logger.info("15\tMertik\t\t\t\tDisabled")
     
     # MSG 5
     if testBit(int(data['msg5'],16),6) == 128:
-        print("16\tBlindsT1/T2/T3/T4\t\tEnabled")
+        logger.info("16\tBlindsT1/T2/T3/T4\t\tEnabled")
     else:
-        print("16\tBlindsT1/T2/T3/T4\t\tDisabled")
+        logger.info("16\tBlindsT1/T2/T3/T4\t\tDisabled")
         
     if testBit(int(data['msg5'],16),6) == 64:
-        print("17\tBlindsT0\t\t\tEnabled")
+        logger.info("17\tBlindsT0\t\t\tEnabled")
     else:
-        print("17\tBlindsT0\t\t\tDisabled")
+        logger.info("17\tBlindsT0\t\t\tDisabled")
         
     if testBit(int(data['msg5'],16),5) == 32:
-        print("18\tOregon Scientific\t\tEnabled")
+        logger.info("18\tOregon Scientific\t\tEnabled")
     else:
-        print("18\tOregon Scientific\t\tDisabled")
+        logger.info("18\tOregon Scientific\t\tDisabled")
         
     if testBit(int(data['msg5'],16),4) == 16:
-        print("19\tMeiantech\t\t\tEnabled")
+        logger.info("19\tMeiantech\t\t\tEnabled")
     else:
-        print("19\tMeiantech\t\t\tDisabled")
+        logger.info("19\tMeiantech\t\t\tDisabled")
     
     if testBit(int(data['msg5'],16),3) == 8:
-        print("20\tHomeEasy EU\t\t\tEnabled")
+        logger.info("20\tHomeEasy EU\t\t\tEnabled")
     else:
-        print("20\tHomeEasy EU\t\t\tDisabled")
+        logger.info("20\tHomeEasy EU\t\t\tDisabled")
         
     if testBit(int(data['msg5'],16),2) == 4:
-        print("21\tAC\t\t\t\tEnabled")
+        logger.info("21\tAC\t\t\t\tEnabled")
     else:
-        print("21\tAC\t\t\t\tDisabled")
+        logger.info("21\tAC\t\t\t\tDisabled")
         
     if testBit(int(data['msg5'],16),1) == 2:
-        print("22\tARC\t\t\t\tEnabled")
+        logger.info("22\tARC\t\t\t\tEnabled")
     else:
-        print("22\tARC\t\t\t\tDisabled")
+        logger.info("22\tARC\t\t\t\tDisabled")
     
     if testBit(int(data['msg5'],16),0) == 1:
-        print("23\tX10\t\t\t\tEnabled")
+        logger.info("23\tX10\t\t\t\tEnabled")
     else:
-        print("23\tX10\t\t\t\tDisabled")
+        logger.info("23\tX10\t\t\t\tDisabled")
     
     return
     
@@ -438,8 +441,7 @@ def rfx_sendmsg(message=None):
     try:
         logger.debug("Serial extension version: " + serial.VERSION)
     except:
-        logger.debug("Error: Serial extension for Python could not be loaded")
-        print("Error: You need to install Serial extension for Python")
+        logger.error("Error: Serial extension for Python could not be loaded")
         return False
         
     # Check for serial device
@@ -447,7 +449,6 @@ def rfx_sendmsg(message=None):
         logger.debug("Device: " + s.port)
     else:
         logger.error("Device name missing")
-        print("Serial device is missing")
         return False
         
     # Open serial port
@@ -455,11 +456,9 @@ def rfx_sendmsg(message=None):
     try:
         s.device = serial.Serial(s.port, s.rate, timeout=s.timeout)
     except serial.SerialException as err:
-        logger.debug("Error: Failed to connect on device, %s" % str(err))
-        print("Error: Failed to connect on device %s" % str(s.port))
-        print("Error: %s" % str(err))
+        logger.error("Error: Failed to connect on device, %s" % err)
         return False
-    
+
     # Flush buffer
     logger.debug("Serialport flush output")
     s.device.flushOutput()
@@ -476,11 +475,11 @@ def rfx_sendmsg(message=None):
     s.device.flushOutput()
     logger.debug("Serialport flush input")
     s.device.flushInput()
-    
+
     logger.debug("Send message")
     s.device.write(message.decode('hex'))
     time.sleep(1)
-    
+
     # Waiting reply
     result = None
     byte = None
@@ -492,60 +491,57 @@ def rfx_sendmsg(message=None):
                 try:
                     if s.device.inWaiting() != 0:
                         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                        logger.debug("Timestamp: " + timestamp)
-                        logger.debug("SerWaiting: " + str(s.device.inWaiting()))
+                        logger.debug("Timestamp: %s", timestamp)
+                        logger.debug("SerWaiting: %d", s.device.inWaiting())
                         byte = s.device.read()
-                        logger.debug("Byte: " + str(ByteToHex(byte)))
+                        logger.debug("Byte: %s", ByteToHex(byte))
                 except IOError, err:
-                    logger.error("Serial read error: %s" % str(err))
-                    print("Serial error: " + str(err))
+                    logger.error("Serial read error: %s", err)
                     break
-                
+
                 try:
                     if byte is not None:
-                        if ord(byte) == 13:
-                            result = byte + readbytes( ord(byte) )
-                            logger.debug("Message: " + str(ByteToHex(result)))
+                        if ord(byte) == 20 or ord(byte) == 13:
+                            result = byte + readbytes(ord(byte))
+                            logger.debug("Message: %s", ByteToHex(result))
                             break
                         else:
-                            logger.debug("Wrong message received")
-                            result = byte + readbytes( ord(byte) )
-                            logger.debug("Message: " + str(ByteToHex(result)))
-                            print("Error: Wrong or no response received")
+                            result = byte + readbytes(ord(byte))
+                            logger.debug("Message: %s", ByteToHex(result))
+                            logger.error("Wrong or no response received")
                             sys.exit(1)
-                            
+
                 except Exception as err:
-                    print("Error: %s" % str(err))
+                    logger.error(err)
                     sys.exit(1)
-                    
+
             except OSError as err:
-                logger.debug("Error in message: %s" % str(ByteToHex(message)))
-                logger.debug("Error: %s" % str(err))
-                logger.debug("Traceback: " + traceback.format_exc())
-                print("Error: Serial error (%s) " % str(ByteToHex(message)))
+                logger.error("Error in message: %s", ByteToHex(message))
+                logger.error(err)
+                logger.error("Traceback: %s", traceback.format_exc())
+                logger.error("Serial error (%s) ", ByteToHex(message))
                 break
-            
+
     except KeyboardInterrupt:
         logger.debug("Received keyboard interrupt")
         pass
-        
+
     logger.debug("Close serial port")
     try:
         s.device.close()
         logger.debug("Serial port closed")
     except:
-        logger.debug("Error: Failed to close the serial port (%s)" % str(s.port))
-        print("Error: Failed to close the port %s" % str(s.port))
+        logger.error("Error: Failed to close the serial port (%s)" % s.port)
         return False
-    
+
     return result
 
 # ------------------------------------------------------------------------------
 if __name__ == '__main__':
-    
+
     r = rfxcmd_data()
     s = serial_data()
-    
+
     parser = optparse.OptionParser()
     parser.add_option("-d", "--device", action="store", type="string", dest="device", help="Serial device of the RFXtrx433")
     parser.add_option("-l", "--list", action="store_true", dest="list", help="List all protocols")
@@ -554,14 +550,14 @@ if __name__ == '__main__':
     parser.add_option("-v", "--save", action="store_true", dest="save", help="Save current settings in device (Note device have limited write cycles)")
     parser.add_option("-V", "--version", action="store_true", dest="version", help="Print rfxcmd version information")
     parser.add_option("-D", "--debug", action="store_true", dest="debug", help="Debug logging on screen")
-    
+
     (options, args) = parser.parse_args()
-    
+
     if options.debug:
         loglevel = logging.DEBUG
     else:
         loglevel = logging.ERROR
-    
+
     # Logging
     formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(module)s:%(lineno)d - %(levelname)s - %(message)s')
     handler = logging.StreamHandler()
@@ -569,22 +565,22 @@ if __name__ == '__main__':
     logger = logging.getLogger("RFXPROTO")
     logger.setLevel(loglevel)
     logger.addHandler(handler)
-    
+
     logger.debug("Logger started")
-    logger.debug("Version: %s" % __version__)
-    logger.debug("Date: %s" % __date__.replace('$', ''))
-    
+    logger.debug("Version: %s", __version__)
+    logger.debug("Date: %s", __date__.replace('$', ''))
+
     if options.version:
         logger.debug("Print version")
         print_version()
-    
+
     if options.device:
-        s.port=options.device
-        logger.debug("Serial device: %s" % str(s.port))
+        s.port = options.device
+        logger.debug("Serial device: %s", s.port)
     else:
-        s.port=None
-        logger.debug("Serial device: %s" % str(s.port))
-    
+        s.port = None
+        logger.debug("Serial device: %s", s.port)
+
     # Set protocol state
     if options.protocol:
         pnum = int(options.protocol)
@@ -597,30 +593,26 @@ if __name__ == '__main__':
                 else:
                     rfx_setmode(pnum, 0)
             else:
-                logger.debug("Error: Serial device is missing")
-                print("Error: Serial device is missing")
+                logger.error("Serial device is missing")
         else:
-            logger.debug("Error: Unknown state parameter for protocol")
-            print("Error: Unknown state parameter for protocol")
-            
+            logger.error("Unknown state parameter for protocol")
+
     # Get current status
     if options.list:
         if not s.port == None:
             logger.debug("Get current state")
             try:
                 result = rfx_sendmsg(r.status)
-                logger.debug("Result: %s" % str(ByteToHex(result)))
+                logger.debug("Result: %s" % ByteToHex(result))
                 if result:
                     rfx_decodestatus(result)
                 else:
-                    print("Invalid result received")
+                    logger.error("Invalid result received")
             except Exception as err:
-                logger.debug("Error: Send failed, error: %s" % str(err))
-                print("Error: Could not send message: %s " % err)
+                logger.error("Send failed, error: %s" % err)
         else:
-            logger.debug("Error: Serial device is missing")
-            print("Error: Serial device is missing")
-        
+            logger.error("Serial device is missing")
+
     logger.debug("Exit")
     sys.exit(0)
 
