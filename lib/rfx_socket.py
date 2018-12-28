@@ -123,7 +123,7 @@ class NetRequestHandler(StreamRequestHandler):
 				self.wfile.write(wwx.weewx_0x57())
 		
 		self.netAdapterClientConnected = False
-		logger.debug("Client disconnected from [%s:%d]" % self.client_address)
+		logger.info("Client disconnected from [%s:%d]" % self.client_address)
 	
 class RFXcmdSocketAdapter(object, StreamRequestHandler):
 	def __init__(self, address='localhost', port=55000):
@@ -136,10 +136,10 @@ class RFXcmdSocketAdapter(object, StreamRequestHandler):
 			threading.Thread(target=self.loopNetServer, args=()).start()
 
 	def loopNetServer(self):
-		logger.debug("LoopNetServer Thread started")
-		logger.debug("Listening on: [%s:%d]" % (self.Address, self.Port))
+		logger.info("LoopNetServer Thread started")
+		logger.info("Listening on: [%s:%d]" % (self.Address, self.Port))
 		self.netAdapter.serve_forever()
-		logger.debug("LoopNetServer Thread stopped")
+		logger.info("LoopNetServer Thread stopped")
 
 # ------------------------------------------------------------------------------
 # END
