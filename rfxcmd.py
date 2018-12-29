@@ -4081,12 +4081,12 @@ def option_listen():
 
     if config.socketserver:
         try:
-            serversocket = RFXcmdSocketAdapter(config.sockethost,int(config.socketport))
+            serversocket = RFXcmdSocketAdapter(config.sockethost, int(config.socketport))
         except:
             log_me('error', "Error starting socket server. Line: " + _line())
             log_me('error', "can not start server socket, another instance already running?")
             exit(1)
-        if serversocket.netAdapterRegistered:
+        if serversocket.net_adapter_registered:
             log_me('debug', "Socket interface started")
         else:
             log_me('warning', "Cannot start socket interface")
@@ -4149,7 +4149,7 @@ def option_listen():
     except KeyboardInterrupt:
         log_me('debug', "Received keyboard interrupt")
         log_me('debug', "Close server socket")
-        serversocket.netAdapter.shutdown()
+        serversocket.net_adapter.shutdown()
 
         if config.serial_active:
             log_me('debug', "Close serial port")
