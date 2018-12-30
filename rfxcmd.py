@@ -2656,46 +2656,6 @@ def option_send():
 
 # ----------------------------------------------------------------------------
 
-def option_bsend():
-    """
-    Send command when rfxcmd is running
-    Input: none
-
-    NOTE! Will be depricated in v0.3 and removed in v0.31
-
-    """
-
-    log_me('info', "BSEND action is DEPRICATED, will be removed really soon...")
-
-    log_me('debug', 'Action: bsend')
-
-    # Remove any whitespaces
-    cmdarg.rawcmd = cmdarg.rawcmd.replace(' ', '')
-    log_me('debug', 'rawcmd: ' + cmdarg.rawcmd)
-
-    # Test the string if it is hex format
-    try:
-        int(cmdarg.rawcmd, 16)
-    except ValueError:
-        log_me('error', "invalid rawcmd, not hex format")
-        exit(1)
-
-    # Check that first byte is not 00
-    if ByteToHex(cmdarg.rawcmd.decode('hex')[0]) == "00":
-        log_me('error', "invalid rawcmd, first byte is zero")
-        exit(1)
-
-    # Check if string is the length that it reports to be
-    cmd_len = int(ByteToHex(cmdarg.rawcmd.decode('hex')[0]), 16)
-    if not len(cmdarg.rawcmd.decode('hex')) == (cmd_len + 1):
-        log_me('error', "invalid rawcmd, invalid length")
-        exit(1)
-
-    if cmdarg.rawcmd:
-        serial_param.port.write(cmdarg.rawcmd.decode('hex'))
-
-# ----------------------------------------------------------------------------
-
 def read_configfile():
     """
     Read items from the configuration file
