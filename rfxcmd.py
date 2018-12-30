@@ -77,7 +77,6 @@ from serial import Serial, VERSION, SerialException
 
 # RFXCMD modules
 from lib.rfx_socket import MESSAGEQUEUE, RFXcmdSocketAdapter
-from lib.rfx_command import Command
 from lib.rfx_utils import stripped, ByteToHex, dec2bin, testBit, clearBit
 import lib.rfx_sensors
 import lib.rfx_decode as rfxdecode
@@ -2852,7 +2851,7 @@ def logger_init(configfile, name, debug):
 def output_me(timestamp, message, packettype, subtype, seqnbr, metadata_list):
     """
     This function writes json or csv output in a different file
-    """ 
+    """
     output_file = open('/var/log/output.log', 'a+')
 
     rawcmd = ByteToHex(message)

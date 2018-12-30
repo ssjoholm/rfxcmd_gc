@@ -13,8 +13,55 @@ REQUIREMENTS
 - Tested on Mac OSX 10.8.2 with Python 2.7.2
 - Tested with RFXCOM device RFXtrx433-USB (v2.1)
 
-```
+```bash
 pip install -r requirements.txt
+```
+
+EXAMPLES
+
+```bash
+/opt/rfxcmd/rfxcmd.py -l -o /opt/rfxcmd/config.xml -D
+
+/opt/rfxcmd/rfxcmd.py -l -d /dev/cu.usbserial-XXXXXXX -v
+```
+
+```bash
+$ cat /var/log/output.log
+{"packettype_id": "56", "timestamp": "2018-12-29 16:30:46", "subtype": "TFA", "rawcmd": "10560405991600430001000B0020002059", "seqnbr": "05", "packettype": "Wind sensors", "metadata": {"wind_gust": 1.1, "battery": 9, "wind_direction": 67, "wind_chill": "3.2", "signal_level": 5, "wind_average_speed": 0.1, "id": "9916", "temperature": "3.2"}}
+{"packettype_id": "20", "timestamp": "2018-12-30 10:50:49", "subtype": "0x0A", "rawcmd": "08200A00C180830659", "seqnbr": "00", "packettype": "Security1", "metadata": {"battery": 9, "status": "Panic", "id": "C18083", "signal_level": 5}}
+
+$ cat /var/log/output.log | jq .
+{
+  "packettype_id": "56",
+  "timestamp": "2018-12-29 16:30:46",
+  "subtype": "TFA",
+  "rawcmd": "10560405991600430001000B0020002059",
+  "seqnbr": "05",
+  "packettype": "Wind sensors",
+  "metadata": {
+    "wind_gust": 1.1,
+    "battery": 9,
+    "wind_direction": 67,
+    "wind_chill": "3.2",
+    "signal_level": 5,
+    "wind_average_speed": 0.1,
+    "id": "9916",
+    "temperature": "3.2"
+  }
+}
+{
+  "packettype_id": "20",
+  "timestamp": "2018-12-30 10:50:49",
+  "subtype": "0x0A",
+  "rawcmd": "08200A00C180830659",
+  "seqnbr": "00",
+  "packettype": "Security1",
+  "metadata": {
+    "battery": 9,
+    "status": "Panic",
+    "id": "C18083",
+    "signal_level": 5
+  }
 ```
 
 
