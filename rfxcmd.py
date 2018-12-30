@@ -848,7 +848,7 @@ def decode_packet(message):
             command = '0x' + command
             log_me('error', "Unknown command received, %s" % str(err))
 
-        signal = rfxdecode.decodeSignal(message[7])
+        signal = rfxdecode.decode_signal(message[7])
 
         try:
             display_subtype = str(rfx.rfx_subtype_10[subtype])
@@ -910,7 +910,7 @@ def decode_packet(message):
         unitcode = int(ByteToHex(message[8]), 16)
         command = rfx.rfx_subtype_11_cmnd[ByteToHex(message[9])]
         dimlevel = rfx.rfx_subtype_11_dimlevel[ByteToHex(message[10])]
-        signal = rfxdecode.decodeSignal(message[11])
+        signal = rfxdecode.decode_signal(message[11])
 
         try:
             display_subtype = str(rfx.rfx_subtype_11[subtype])
@@ -995,8 +995,8 @@ def decode_packet(message):
             channel = 255
 
         command = rfx.rfx_subtype_12_cmnd[ByteToHex(message[7])]
-        battery = rfxdecode.decodeBattery(message[8])
-        signal = rfxdecode.decodeSignal(message[8])
+        battery = rfxdecode.decode_battery(message[8])
+        signal = rfxdecode.decode_signal(message[8])
 
         try:
             display_subtype = str(rfx.rfx_subtype_12[subtype])
@@ -1061,7 +1061,7 @@ def decode_packet(message):
         code3 = dec2bin(int(ByteToHex(message[6]), 16))
         code_bin = code1 + " " + code2 + " " + code3
         pulse = ((int(ByteToHex(message[7]), 16) * 256) + int(ByteToHex(message[8]), 16))
-        signal = rfxdecode.decodeSignal(message[9])
+        signal = rfxdecode.decode_signal(message[9])
 
         try:
             display_subtype = str(rfx.rfx_subtype_13[subtype])
@@ -1149,7 +1149,7 @@ def decode_packet(message):
         else:
             level = 0
 
-        signal = rfxdecode.decodeSignal(message[10])
+        signal = rfxdecode.decode_signal(message[10])
 
         try:
             display_subtype = rfx.rfx_subtype_14[subtype]
@@ -1233,7 +1233,7 @@ def decode_packet(message):
         command = rfx.rfx_subtype_15_cmnd[ByteToHex(message[8])]
         command_seqnbr = ByteToHex(message[9])
         seqnbr2 = ByteToHex(message[10])
-        signal = rfxdecode.decodeSignal(message[11])
+        signal = rfxdecode.decode_signal(message[11])
 
         # PRINTOUT
         log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_15[subtype])
@@ -1306,7 +1306,7 @@ def decode_packet(message):
             sound = None
 
         try:
-            signal = rfxdecode.decodeSignal(message[7])
+            signal = rfxdecode.decode_signal(message[7])
         except Exception as err:
             log_me('error', err)
             signal = "Error"
@@ -1493,7 +1493,7 @@ def decode_packet(message):
             log_me('error', "Unknown command received")
             command_str = "Unknown command received"
 
-        signal = rfxdecode.decodeSignal(message[8])
+        signal = rfxdecode.decode_signal(message[8])
 
         # PRINTOUT
         log_me('info', "Subtype\t\t\t= %s" % str(subtype_str))
@@ -1544,8 +1544,8 @@ def decode_packet(message):
         # DATA
         sensor_id = id1 + id2 + ByteToHex(message[6])
         status = rfx.rfx_subtype_20_status[ByteToHex(message[7])]
-        signal = rfxdecode.decodeSignal(message[8])
-        battery = rfxdecode.decodeBattery(message[8])
+        signal = rfxdecode.decode_signal(message[8])
+        battery = rfxdecode.decode_battery(message[8])
         try:
             display_subtype = rfx.rfx_subtype_20[subtype]
         except KeyError:
@@ -1667,7 +1667,7 @@ def decode_packet(message):
         toggle = ByteToHex(message[6])
 
         if subtype == '00' or subtype == '02' or subtype == '03':
-            signal = rfxdecode.decodeSignal(message[6])
+            signal = rfxdecode.decode_signal(message[6])
 
         # PRINTOUT
         log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_30[subtype])
@@ -1736,7 +1736,7 @@ def decode_packet(message):
             mode = rfx.rfx_subtype_40_mode['1']
         else:
             mode = rfx.rfx_subtype_40_mode['0']
-        signal = rfxdecode.decodeSignal(message[9])
+        signal = rfxdecode.decode_signal(message[9])
 
         # PRINTOUT
         log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_40[subtype])
@@ -1846,7 +1846,7 @@ def decode_packet(message):
 
         log_me('debug', "Command: " + command)
 
-        signal = rfxdecode.decodeSignal(message[8])
+        signal = rfxdecode.decode_signal(message[8])
 
         # PRINTOUT
         log_me('debug', "Printout data")
@@ -1897,9 +1897,9 @@ def decode_packet(message):
 
         # DATA
         sensor_id = id1 + id2
-        temperature = rfxdecode.decodeTemperature(message[6], message[7])
-        signal = rfxdecode.decodeSignal(message[8])
-        battery = rfxdecode.decodeBattery(message[8])
+        temperature = rfxdecode.decode_temperature(message[6], message[7])
+        signal = rfxdecode.decode_signal(message[8])
+        battery = rfxdecode.decode_battery(message[8])
 
         # PRINTOUT
         log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_50[subtype])
@@ -1956,8 +1956,8 @@ def decode_packet(message):
         sensor_id = id1 + id2
         humidity = int(ByteToHex(message[6]), 16)
         humidity_status = rfx.rfx_subtype_51_humstatus[ByteToHex(message[7])]
-        signal = rfxdecode.decodeSignal(message[8])
-        battery = rfxdecode.decodeBattery(message[8])
+        signal = rfxdecode.decode_signal(message[8])
+        battery = rfxdecode.decode_battery(message[8])
 
         # PRINTOUT
         log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_51[subtype])
@@ -2012,11 +2012,11 @@ def decode_packet(message):
 
         # DATA
         sensor_id = id1 + id2
-        temperature = rfxdecode.decodeTemperature(message[6], message[7])
+        temperature = rfxdecode.decode_temperature(message[6], message[7])
         humidity = int(ByteToHex(message[8]), 16)
         humidity_status = rfx.rfx_subtype_52_humstatus[ByteToHex(message[9])]
-        signal = rfxdecode.decodeSignal(message[10])
-        battery = rfxdecode.decodeBattery(message[10])
+        signal = rfxdecode.decode_signal(message[10])
+        battery = rfxdecode.decode_battery(message[10])
 
         # PRINTOUT
         log_me('debug', "Print data stdout")
@@ -2081,7 +2081,7 @@ def decode_packet(message):
 
         # DATA
         sensor_id = id1 + id2
-        temperature = rfxdecode.decodeTemperature(message[6], message[7])
+        temperature = rfxdecode.decode_temperature(message[6], message[7])
         humidity = int(ByteToHex(message[8]), 16)
         try:
             humidity_status = rfx.rfx_subtype_54_humstatus[ByteToHex(message[9])]
@@ -2098,8 +2098,8 @@ def decode_packet(message):
         if config.barometric != 0:
             barometric = int(barometric) + int(config.barometric)
         forecast = rfx.rfx_subtype_54_forecast[ByteToHex(message[12])]
-        signal = rfxdecode.decodeSignal(message[13])
-        battery = rfxdecode.decodeBattery(message[13])
+        signal = rfxdecode.decode_signal(message[13])
+        battery = rfxdecode.decode_battery(message[13])
 
         # PRINTOUT
         log_me('info', "Subtype\t\t\t= %s " % str(rfx.rfx_subtype_54[subtype]))
@@ -2179,8 +2179,8 @@ def decode_packet(message):
                         (int(raintotal2, 16) * 0x100) + int(raintotal3, 16)) / 10
         else:
             raintotal = 0
-        signal = rfxdecode.decodeSignal(message[11])
-        battery = rfxdecode.decodeBattery(message[11])
+        signal = rfxdecode.decode_signal(message[11])
+        battery = rfxdecode.decode_battery(message[11])
 
         # PRINTOUT
         log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_55[subtype])
@@ -2251,15 +2251,15 @@ def decode_packet(message):
         gust = ((int(ByteToHex(message[10]), 16) * 256) + \
                int(ByteToHex(message[11]), 16)) * 0.1
         if subtype == "04":
-            temperature = rfxdecode.decodeTemperature(message[12], message[13])
+            temperature = rfxdecode.decode_temperature(message[12], message[13])
         else:
             temperature = 0
         if subtype == "04":
-            windchill = rfxdecode.decodeTemperature(message[14], message[15])
+            windchill = rfxdecode.decode_temperature(message[14], message[15])
         else:
             windchill = 0
-        signal = rfxdecode.decodeSignal(message[16])
-        battery = rfxdecode.decodeBattery(message[16])
+        signal = rfxdecode.decode_signal(message[16])
+        battery = rfxdecode.decode_battery(message[16])
         display_subtype = rfx.rfx_subtype_56[subtype]
 
         # PRINTOUT
@@ -2329,9 +2329,9 @@ def decode_packet(message):
         # DATA
         sensor_id = id1 + id2
         ultra_violet = int(ByteToHex(message[6]), 16) * 10
-        temperature = rfxdecode.decodeTemperature(message[6], message[8])
-        signal = rfxdecode.decodeSignal(message[9])
-        battery = rfxdecode.decodeBattery(message[9])
+        temperature = rfxdecode.decode_temperature(message[6], message[8])
+        signal = rfxdecode.decode_signal(message[9])
+        battery = rfxdecode.decode_battery(message[9])
 
         # PRINTOUT
         log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_57[subtype])
@@ -2410,8 +2410,8 @@ def decode_packet(message):
         time_string = "%s:%s:%s" % (str(time_hr), str(time_min), str(time_sec))
         datetime_string = "%s %s" % (str(date_string), str(time_string))
         log_me('debug', "DateTime: %s" % str(datetime_string))
-        signal = rfxdecode.decodeSignal(message[13])
-        battery = rfxdecode.decodeBattery(message[13])
+        signal = rfxdecode.decode_signal(message[13])
+        battery = rfxdecode.decode_battery(message[13])
 
         # PRINTOUT
         log_me('info', "Subtype\t\t\t= %s" % str(rfx.rfx_subtype_58[subtype]))
@@ -2474,8 +2474,8 @@ def decode_packet(message):
         channel1 = (int(ByteToHex(message[7]), 16) * 0x100 + int(ByteToHex(message[8]), 16)) * 0.1
         channel2 = (int(ByteToHex(message[9]), 16) * 0x100 + int(ByteToHex(message[10]), 16)) * 0.1
         channel3 = (int(ByteToHex(message[11]), 16) * 0x100 + int(ByteToHex(message[12]), 16)) * 0.1
-        signal = rfxdecode.decodeSignal(message[13])
-        battery = rfxdecode.decodeBattery(message[13])
+        signal = rfxdecode.decode_signal(message[13])
+        battery = rfxdecode.decode_battery(message[13])
 
         # PRINTOUT
         log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_5A[subtype])
@@ -2530,9 +2530,9 @@ def decode_packet(message):
 
         # DATA
         sensor_id = id1 + id2
-        signal = rfxdecode.decodeSignal(message[17])
+        signal = rfxdecode.decode_signal(message[17])
         count = int(ByteToHex(message[6]), 16)
-        battery = rfxdecode.decodeBattery(message[17])
+        battery = rfxdecode.decode_battery(message[17])
         instant = int(ByteToHex(message[7]), 16) * 0x1000000 + \
                   int(ByteToHex(message[8]), 16) * 0x10000 + \
                   int(ByteToHex(message[9]), 16) * 0x100  + \
@@ -2611,8 +2611,8 @@ def decode_packet(message):
             int(ByteToHex(message[16]), 16) * 0x10000 + \
             int(ByteToHex(message[17]), 16) * 0x100 + \
             int(ByteToHex(message[18]), 16)) / 223.666)
-        signal = rfxdecode.decodeSignal(message[19])
-        battery = rfxdecode.decodeBattery(message[19])
+        signal = rfxdecode.decode_signal(message[19])
+        battery = rfxdecode.decode_battery(message[19])
 
         # PRINTOUT
         log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_5B[subtype])
@@ -2675,7 +2675,7 @@ def decode_packet(message):
         energy = (int(ByteToHex(message[11]), 16) * 0x100 + int(ByteToHex(message[12]), 16)) * 0.01
         powerfactor = (int(ByteToHex(message[13]), 16)) * 0.01
         freq = int(ByteToHex(message[14]), 16)
-        signal = rfxdecode.decodeSignal(message[15])
+        signal = rfxdecode.decode_signal(message[15])
 
         # PRINTOUT
         log_me('info', "Subtype\t\t\t= %s" % str(rfx.rfx_subtype_5C[subtype]))
@@ -2803,7 +2803,7 @@ def decode_packet(message):
 
         # DATA
         if subtype == '00':
-            temperature = float(rfxdecode.decodeTemperature(message[5], message[6]))
+            temperature = float(rfxdecode.decode_temperature(message[5], message[6]))
             temperature = temperature * 0.1
         else:
             temperature = 0
@@ -2813,7 +2813,7 @@ def decode_packet(message):
             voltage = voltage_hi + voltage_lo
         else:
             voltage = 0
-        signal = rfxdecode.decodeSignal(message[7])
+        signal = rfxdecode.decode_signal(message[7])
 
         if subtype == '03':
             sensor_message = rfx.rfx_subtype_70_msg03[message[6]]
@@ -2889,7 +2889,7 @@ def decode_packet(message):
         sensor_power = ''
 
         try:
-            sensor_power = rfxdecode.decodePower(message[7], message[8], message[9])
+            sensor_power = rfxdecode.decode_power(message[7], message[8], message[9])
         except Exception, err:
             log_me('error', err)
 
