@@ -13,6 +13,11 @@ REQUIREMENTS
 - Tested on Mac OSX 10.8.2 with Python 2.7.2
 - Tested with RFXCOM device RFXtrx433-USB (v2.1)
 
+```
+pip install -r requirements.txt
+```
+
+
 THANKS
 
 Thanks to following users who have helped with testing, patches, ideas, bug reports, and so on (in no special order). Anders, Dimitri, Patrik, Ludwig, Jean-Michel, Jean-Baptiste, Robert, Fabien, Bert, George, Jean-Francois, Mark, Frederic, Matthew, Arno, Jean-Louis, Christophe, Fredrik, Neil, Pierre-Yves and to RFXCOM for their support.
