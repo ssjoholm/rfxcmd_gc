@@ -14,12 +14,6 @@
 	<daemon_active>no</daemon_active>
 	<daemon_pidfile>/var/run/rfxcmd.pid</daemon_pidfile>
 		
-	<!-- Trigger -->
-	<trigger_active>no</trigger_active>
-	<trigger_onematch>no</trigger_onematch>
-	<trigger_file>trigger.xml</trigger_file>
-	<trigger_timeout>10</trigger_timeout>
-		
 	<!-- Logging -->
 	<loglevel>error</loglevel>
 	<logfile>/var/log/rfxcmd.log</logfile>

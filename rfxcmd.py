@@ -94,10 +94,6 @@ class ConfigData:
             serial_device=None,
             serial_rate=38400,
             serial_timeout=9,
-            trigger_active=False,
-            trigger_onematch=False,
-            trigger_file="",
-            trigger_timeout=10,
             loglevel="info",
             logfile="rfxcmd.log",
             program_path="",
@@ -120,10 +116,6 @@ class ConfigData:
         self.serial_device = serial_device
         self.serial_rate = serial_rate
         self.serial_timeout = serial_timeout
-        self.trigger_active = trigger_active
-        self.trigger_onematch = trigger_onematch
-        self.trigger_file = trigger_file
-        self.trigger_timeout = trigger_timeout
         self.loglevel = loglevel
         self.logfile = logfile
         self.program_path = program_path
@@ -186,15 +178,6 @@ class SerialData:
         self.port = port
         self.rate = rate
         self.timeout = timeout
-
-# Store the trigger data from xml file
-class TriggerData:
-    def __init__(
-            self,
-            data=""
-        ):
-
-        self.data = data
 
 # Store the whitelist data from xml file
 class WhitelistData:
@@ -803,27 +786,6 @@ def decode_packet(message):
         # OUTPUT
         output_me(timestamp, message, packettype, subtype, seqnbr, [('message', indata)])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$message$", indata)
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -871,30 +833,6 @@ def decode_packet(message):
             ('command', command),
             ('unitcode', unitcode)])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$housecode$", str(housecode))
-                    action = action.replace("$unitcode$", str(unitcode))
-                    action = action.replace("$command$", command)
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -934,30 +872,6 @@ def decode_packet(message):
             ('command', command),
             ('unitcode', unitcode),
             ('dim_level', dimlevel)])
-
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$unitcode$", str(unitcode))
-                    action = action.replace("$command$", command)
-                    action = action.replace("$dimlevel$", dimlevel)
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -1021,30 +935,6 @@ def decode_packet(message):
             ('command', command),
             ('channel', channel)])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$system$", str(system))
-                    action = action.replace("$channel$", str(channel))
-                    action = action.replace("$command$", command)
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -1083,29 +973,6 @@ def decode_packet(message):
             ('s1_s24', code_bin),
             ('pulse', pulse),
             ('pulse_usec', signal)])
-
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$code$", code_bin)
-                    action = action.replace("$pulse$", str(pulse))
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -1190,32 +1057,6 @@ def decode_packet(message):
                 ('command', command),
                 ('signal_level', signal)])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$unitcode$", str(unitcode))
-                    action = action.replace("$command$", command)
-                    if subtype == '00':
-                        action = action.replace("$level$", level)
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -1254,31 +1095,6 @@ def decode_packet(message):
             ('command', command),
             ('unitcode', unitcode),
             ('command_seqnbr', command_seqnbr)])
-
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$groupcode$", groupcode)
-                    action = action.replace("$unitcode$", str(unitcode))
-                    action = action.replace("$command$", command)
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -1324,28 +1140,6 @@ def decode_packet(message):
             ('id', sensor_id),
             ('signal_level', signal)])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: %s, Action: %s" % (str(trigger_message), str(action)))
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    if sound != None:
-                        action = action.replace("$sound$", sound)
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x%s - End" % packettype)
 
 
@@ -1364,26 +1158,6 @@ def decode_packet(message):
         # OUTPUT
         output_me(timestamp, message, packettype, subtype, seqnbr, [])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -1400,26 +1174,6 @@ def decode_packet(message):
 
         # OUTPUT
         output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -1438,25 +1192,6 @@ def decode_packet(message):
 
         # OUTPUT
         output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -1510,27 +1245,6 @@ def decode_packet(message):
             ('unicode', unitcode_str),
             ('command', command_str)])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", str(subtype))
-                    action = action.replace("$unitcode$", str(unitcode))
-                    action = action.replace("$command$", str(command))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -1566,30 +1280,6 @@ def decode_packet(message):
             ('id', sensor_id),
             ('status', status)])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$status$", status)
-                    action = action.replace("$battery$", str(battery))
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -1607,26 +1297,6 @@ def decode_packet(message):
 
         # OUTPUT
         output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -1689,32 +1359,6 @@ def decode_packet(message):
         elif subtype == '04' or subtype == '01' or subtype == '03':
             output_me(timestamp, message, packettype, subtype, seqnbr, [])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", id1)
-                    action = action.replace("$command$", command)
-                    if subtype == '04':
-                        action = action.replace("$toggle$", toggle)
-                        action = action.replace("$command$", cmndtype)
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -1756,32 +1400,6 @@ def decode_packet(message):
             ('temperature_set', temperature_set),
             ('temperature', temperature)])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$temperature$", str(temperature))
-                    action = action.replace("$temperatureset$", str(temperature_set))
-                    action = action.replace("$mode$", mode)
-                    action = action.replace("$status$", status)
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -1797,26 +1415,6 @@ def decode_packet(message):
 
         # OUTPUT
         output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -1862,30 +1460,6 @@ def decode_packet(message):
             ('unitcode', unitcode),
             ('command', command)])
 
-        # TRIGGER
-        if config.trigger_active:
-            log_me('debug', "Check trigger")
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$unitcode$", unitcode)
-                    action = action.replace("$command$", command)
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -1915,33 +1489,6 @@ def decode_packet(message):
             ('battery', battery),
             ('signal_level', signal),
             ('temperature', temperature)])
-
-        # TRIGGER
-        if config.trigger_active:
-            log_me('debug', "Check trigger")
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$temperature$", str(temperature))
-                    action = action.replace("$battery$", str(battery))
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-                else:
-                    log_me('debug', "No trigger match")
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -1975,31 +1522,6 @@ def decode_packet(message):
             ('humidity', humidity),
             ('battery', battery),
             ('signal_level', signal)])
-
-        # TRIGGER
-        if config.trigger_active:
-            log_me('debug', "Check trigger")
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$humidity$", str(humidity))
-                    action = action.replace("$battery$", str(battery))
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -2037,32 +1559,6 @@ def decode_packet(message):
             ('humidity', humidity),
             ('battery', battery),
             ('signal_level', signal)])
-
-        # TRIGGER
-        if config.trigger_active:
-            log_me('debug', "Check trigger")
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$temperature$", str(temperature))
-                    action = action.replace("$humidity$", str(humidity))
-                    action = action.replace("$battery$", str(battery))
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -2125,33 +1621,6 @@ def decode_packet(message):
             ('barometric_pressure', barometric),
             ('temperature', temperature)])
 
-        # TRIGGER
-        if config.trigger_active:
-            log_me('debug', "Trigger")
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$temperature$", str(temperature))
-                    action = action.replace("$humidity$", str(humidity))
-                    action = action.replace("$barometric$", str(barometric))
-                    action = action.replace("$battery$", str(battery))
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -2204,31 +1673,6 @@ def decode_packet(message):
             ('battery', battery),
             ('id', sensor_id),
             ('signal_level', signal)])
-
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$rainrate$", str(rainrate))
-                    action = action.replace("$raintotal$", str(raintotal))
-                    action = action.replace("$battery$", str(battery))
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -2287,36 +1731,6 @@ def decode_packet(message):
             ('wind_direction', direction),
             ('wind_chill', windchill)])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$direction$", str(direction))
-                    if subtype != "05":
-                        action = action.replace("$average$", str(av_speed))
-                    if subtype == "04":
-                        action = action.replace("$temperature$", str(temperature))
-                        action = action.replace("$windchill$", str(windchill))
-                    action = action.replace("$windgust$", str(gust))
-                    action = action.replace("$battery$", str(battery))
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -2357,33 +1771,6 @@ def decode_packet(message):
                 ('ultra_violet', ultra_violet),
                 ('battery', battery),
                 ('signal_level', signal)])
-
-        # TRIGGER
-        if config.trigger_active:
-            log_me('debug', "Trigger action")
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$uv$", str(ultra_violet))
-                    if subtype == '03':
-                        action = action.replace("$temperature$", str(temperature))
-                    action = action.replace("$battery$", str(battery))
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -2432,33 +1819,6 @@ def decode_packet(message):
             ('battery', battery),
             ('signal_level', signal)])
 
-        # TRIGGER
-        if config.trigger_active:
-            log_me('debug', "Trigger action")
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$date$", str(date_string))
-                    action = action.replace("$time$", str(time_string))
-                    action = action.replace("$dow$", str(date_dow))
-                    action = action.replace("$battery$", str(battery))
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -2490,33 +1850,6 @@ def decode_packet(message):
 
         # OUTPUT
         output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$counter$", str(count))
-                    action = action.replace("$channel1$", str(channel1))
-                    action = action.replace("$channel2$", str(channel2))
-                    action = action.replace("$channel3$", str(channel3))
-                    action = action.replace("$battery$", str(battery))
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -2563,32 +1896,6 @@ def decode_packet(message):
             ('battery', battery),
             ('signal_level', signal)])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$count$", str(count))
-                    action = action.replace("$instant$", str(instant))
-                    action = action.replace("$total$", str(usage))
-                    action = action.replace("$battery$", str(battery))
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -2630,34 +1937,6 @@ def decode_packet(message):
         # OUTPUT
         output_me(timestamp, message, packettype, subtype, seqnbr, [])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$counter$", str(count))
-                    action = action.replace("$channel1$", str(channel1))
-                    action = action.replace("$channel2$", str(channel2))
-                    action = action.replace("$channel3$", str(channel3))
-                    action = action.replace("$battery$", str(battery))
-                    action = action.replace("$signal$", str(signal))
-                    action = action.replace("$total$", str(total))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -2692,32 +1971,6 @@ def decode_packet(message):
         # OUTPUT
         output_me(timestamp, message, packettype, subtype, seqnbr, [])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", str(sensor_id))
-                    action = action.replace("$voltage$", str(voltage))
-                    action = action.replace("$current$", str(current))
-                    action = action.replace("$powerfactor$", str(powerfactor))
-                    action = action.replace("$frequency$", str(freq))
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -2735,26 +1988,6 @@ def decode_packet(message):
         # OUTPUT
         output_me(timestamp, message, packettype, subtype, seqnbr, [])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -2771,26 +2004,6 @@ def decode_packet(message):
 
         # OUTPUT
         output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -2846,34 +2059,6 @@ def decode_packet(message):
                 ('id', id1),
                 ('voltage', voltage)])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", id1)
-                    if subtype == '00':
-                        action = action.replace("$temperature$", str(temperature))
-                    if subtype == '01' or subtype == '02':
-                        action = action.replace("$voltage$", str(voltage))
-                    if subtype == '03':
-                        action = action.replace("$message$", sensor_message)
-                    action = action.replace("$signal$", str(signal))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -2904,28 +2089,6 @@ def decode_packet(message):
             ('id', sensor_id),
             ('power', sensor_power)])
 
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    action = action.replace("$id$", id1)
-                    action = action.replace("$power$", str(sensor_power))
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
-
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
     # ---------------------------------------
@@ -2942,26 +2105,6 @@ def decode_packet(message):
 
         # OUTPUT
         output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        # TRIGGER
-        if config.trigger_active:
-            for trigger in triggerlist.data:
-                trigger_message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-                action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-                rawcmd = ByteToHex(message)
-                rawcmd = rawcmd.replace(' ', '')
-                if match(trigger_message, rawcmd):
-                    log_me('debug', "Trigger match")
-                    log_me('debug', "Message: " + trigger_message + ", Action: " + action)
-                    action = action.replace("$raw$", raw_message)
-                    action = action.replace("$packettype$", packettype)
-                    action = action.replace("$subtype$", subtype)
-                    log_me('debug', "Execute shell")
-                    command = Command(action)
-                    command.run(timeout=config.trigger_timeout)
-                    if config.trigger_onematch:
-                        log_me('debug', "Trigger onematch active, exit trigger")
-                        return
 
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
 
@@ -3239,26 +2382,6 @@ def read_whitelistfile():
 
     for sensor in whitelist.data:
         log_me('debug', "Tags: " + sensor.childNodes[0].nodeValue)
-
-# ----------------------------------------------------------------------------
-
-def read_triggerfile():
-    """
-    Read trigger file to list
-    """
-    try:
-        xmldoc = minidom.parse(config.trigger_file)
-    except Exception, err:
-        log_me('error', "Error in " + config.trigger_file + " file")
-        log_me('error', err)
-        exit(1)
-
-    triggerlist.data = xmldoc.documentElement.getElementsByTagName('trigger')
-
-    for trigger in triggerlist.data:
-        message = trigger.getElementsByTagName('message')[0].childNodes[0].nodeValue
-        action = trigger.getElementsByTagName('action')[0].childNodes[0].nodeValue
-        log_me('debug', "Message: " + message + ", Action: " + action)
 
 # ----------------------------------------------------------------------------
 
@@ -3596,13 +2719,6 @@ def read_configfile():
         log_me('debug', "Process RFXmsg: " + str(config.process_rfxmsg))
 
         # ----------------------
-        # TRIGGER
-        config.trigger_active = bool(read_config(cmdarg.configfile, "trigger_active") == "yes")
-        config.trigger_onematch = bool(read_config(cmdarg.configfile, "trigger_onematch") == "yes")
-        config.trigger_file = read_config(cmdarg.configfile, "trigger_file")
-        config.trigger_timeout = read_config(cmdarg.configfile, "trigger_timeout")
-
-        # ----------------------
         # SOCKET SERVER
         config.socketserver = bool(read_config(cmdarg.configfile, "socketserver") == "yes")
         config.sockethost = read_config(cmdarg.configfile, "sockethost")
@@ -3916,12 +3032,6 @@ def main():
         read_whitelistfile()
 
     # ----------------------------------------------------------
-    # Triggerlist
-    if config.trigger_active:
-        log_me('debug', "Read triggerlist file")
-        read_triggerfile()
-
-    # ----------------------------------------------------------
     # SERIAL
     if options.device:
         config.device = options.device
@@ -4012,9 +3122,6 @@ if __name__ == '__main__':
     rfx = lib.rfx_sensors.rfx_data()
     rfxcmd = RfxCmdData()
     serial_param = SerialData()
-
-    # Triggerlist
-    triggerlist = TriggerData()
 
     # Whitelist
     whitelist = WhitelistData()
