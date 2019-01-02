@@ -50,11 +50,11 @@
 __author__ = "Sebastian Sjoholm"
 __copyright__ = "Copyright 2012-2014, Sebastian Sjoholm"
 __license__ = "GPL"
-__version__ = "0.4"
+__version__ = "1.0.0"
 __maintainer__ = "Nicolas Béguier"
 __date__ = "$Date: 2018-12-27 14:05:33 +0100 (Thu, 27 Dec 2018) $"
 
-# Default modules
+# Standard library
 from inspect import currentframe, getframeinfo
 from json import dumps
 from logging import Formatter, StreamHandler, getLogger, getLevelName, FileHandler
@@ -68,18 +68,24 @@ from string import whitespace
 import sys
 import xml.dom.minidom as minidom
 
-# 3rd party modules
+# 3rd party library
 # These might not be needed, depended on usage
 from serial import Serial, VERSION, SerialException
 
 # Debug
 # from pdb import set_trace as st
 
-# RFXCMD modules
+# RFXCMD library
 from lib.rfx_socket import MESSAGEQUEUE, RFXcmdSocketAdapter
-from lib.rfx_utils import stripped, ByteToHex, dec2bin, testBit, clearBit
+from lib.rfx_utils import stripped, ByteToHex
 import lib.rfx_sensors
-import lib.rfx_decode as rfxdecode
+import lib.rfx_decode_0x0 as rfxdecode0x0
+import lib.rfx_decode_0x1 as rfxdecode0x1
+import lib.rfx_decode_0x2 as rfxdecode0x2
+import lib.rfx_decode_0x3 as rfxdecode0x3
+import lib.rfx_decode_0x4 as rfxdecode0x4
+import lib.rfx_decode_0x5 as rfxdecode0x5
+import lib.rfx_decode_0x7 as rfxdecode0x7
 import lib.rfx_protocols as protocol
 
 # ------------------------------------------------------------------------------
@@ -358,6 +364,11 @@ def decode_packet(message):
         decoded = True
         packettype = None
 
+    if packettype == '14' and len(message) != 11:
+        log_me('error', "Packet has wrong length, discarding")
+        decoded = True
+        packettype = None
+
     if packettype == '15' and len(message) != 12:
         log_me('error', "Packet has wrong length, discarding")
         decoded = True
@@ -398,7 +409,7 @@ def decode_packet(message):
         decoded = True
         packettype = None
 
-    if packettype == '30' and len(message) != 7:
+    if packettype == '30' and len(message) != 8:
         log_me('error', "Packet has wrong length, discarding")
         decoded = True
         packettype = None
@@ -530,1586 +541,211 @@ def decode_packet(message):
             log_me('error', "Error when trying to write message log")
             log_me('error', err)
 
-    # ---------------------------------------
+    metadata = list()
+    output_extra = list()
+
     # 0x0 - Interface Control
-    # ---------------------------------------
     if packettype == '00':
         log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
 
-    # ---------------------------------------
     # 0x01 - Interface Message
-    # ---------------------------------------
     if packettype == '01':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x0.decode_0x01(message)
 
-        data = {
-            'packetlen' : ByteToHex(message[0]),
-            'packettype' : ByteToHex(message[1]),
-            'subtype' : ByteToHex(message[2]),
-            'seqnbr' : ByteToHex(message[3]),
-            'cmnd' : ByteToHex(message[4]),
-            'msg1' : ByteToHex(message[5]),
-            'msg2' : ByteToHex(message[6]),
-            'msg3' : ByteToHex(message[7]),
-            'msg4' : ByteToHex(message[8]),
-            'msg5' : ByteToHex(message[9]),
-            'msg6' : ByteToHex(message[10]),
-            'msg7' : ByteToHex(message[11]),
-            'msg8' : ByteToHex(message[12]),
-            'msg9' : ByteToHex(message[13])
-        }
-
-        # Subtype
-        if data['subtype'] == '00':
-            log_me('info', "Subtype\t\t\t= Interface response")
-        else:
-            log_me('info', "Subtype\t\t\t= Unknown type (" + data['packettype'] + ")")
-
-        # Seq
-        log_me('info', "Sequence nbr\t\t= " + data['seqnbr'])
-
-        # Command
-        try:
-            log_me('info', "Response on cmnd\t= " + rfx.rfx_cmnd[data['cmnd']])
-        except KeyError:
-            log_me('warning', "Response on cmnd\t= Invalid")
-
-        # MSG 1
-        log_me('info', "Transceiver type\t= " + rfx.rfx_subtype_01_msg1[data['msg1']])
-
-        # MSG 2
-        log_me('info', "Firmware version\t= " + str(int(data['msg2'], 16)))
-
-        log_me('info', "Protocols:")
-
-        # ------------------------------------------------------
-        # MSG 3
-
-        protocol = str(rfx.rfx_subtype_01_msg3['128'])
-        if testBit(int(data['msg3'], 16), 7) == 128:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg3['64'])
-        if testBit(int(data['msg3'], 16), 6) == 64:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg3['32'])
-        if testBit(int(data['msg3'], 16), 5) == 32:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg3['16'])
-        if testBit(int(data['msg3'], 16), 4) == 16:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg3['8'])
-        if testBit(int(data['msg3'], 16), 3) == 8:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg3['4'])
-        if testBit(int(data['msg3'], 16), 2) == 4:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg3['2'])
-        if testBit(int(data['msg3'], 16), 1) == 2:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg3['1'])
-        if testBit(int(data['msg3'], 16), 0) == 1:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        # ------------------------------------------------------
-        # MSG 4
-
-        protocol = str(rfx.rfx_subtype_01_msg4['128'])
-        if testBit(int(data['msg4'], 16), 7) == 128:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg4['64'])
-        if testBit(int(data['msg4'], 16), 6) == 64:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg4['32'])
-        if testBit(int(data['msg4'], 16), 5) == 32:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg4['16'])
-        if testBit(int(data['msg4'], 16), 4) == 16:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg4['8'])
-        if testBit(int(data['msg4'], 16), 3) == 8:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg4['4'])
-        if testBit(int(data['msg4'], 16), 2) == 4:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg4['2'])
-        if testBit(int(data['msg4'], 16), 1) == 2:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg4['1'])
-        if testBit(int(data['msg4'], 16), 0) == 1:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        # ------------------------------------------------------
-        # MSG 5
-
-        protocol = str(rfx.rfx_subtype_01_msg5['128'])
-        if testBit(int(data['msg5'], 16), 7) == 128:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg5['64'])
-        if testBit(int(data['msg5'], 16), 6) == 64:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg5['32'])
-        if testBit(int(data['msg5'], 16), 5) == 32:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg5['16'])
-        if testBit(int(data['msg5'], 16), 4) == 16:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg5['8'])
-        if testBit(int(data['msg5'], 16), 3) == 8:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg5['4'])
-        if testBit(int(data['msg5'], 16), 2) == 4:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg5['2'])
-        if testBit(int(data['msg5'], 16), 1) == 2:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        protocol = str(rfx.rfx_subtype_01_msg5['1'])
-        if testBit(int(data['msg5'], 16), 0) == 1:
-            log_me('info', "%-25s Enabled" % protocol)
-        else:
-            log_me('info', "%-25s Disabled" % protocol)
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x02 - Receiver/Transmitter Message
-    # ---------------------------------------
     if packettype == '02':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
-
         decoded = True
+        metadata, output_extra = rfxdecode0x0.decode_0x02(subtype, seqnbr, id1)
 
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_02[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-
-        if subtype == '01':
-            log_me('info', "Message\t\t\t= " + rfx.rfx_subtype_02_msg1[id1])
-
-        # OUTPUT
-        if subtype == '00':
-            output_me(timestamp, message, packettype, subtype, seqnbr, [])
-        else:
-            output_me(timestamp, message, packettype, subtype, seqnbr, [('id1', id1)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x03 - Undecoded Message
-    # ---------------------------------------
     if packettype == '03':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x0.decode_0x03(message, subtype, seqnbr)
 
-        indata = ByteToHex(message)
-
-        # remove all spaces
-        for i in whitespace:
-            indata = indata.replace(i, "")
-
-        indata = indata[4:]
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_03[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Message\t\t\t= " + indata)
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [('message', indata)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x10 Lighting1
-    # ---------------------------------------
     if packettype == '10':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
-
         decoded = True
+        metadata, output_extra = rfxdecode0x1.decode_0x10(message, subtype, seqnbr)
 
-        # DATA
-        try:
-            housecode = rfx.rfx_subtype_10_housecode[ByteToHex(message[4])]
-        except Exception as err:
-            housecode = '0x' + housecode
-            log_me('error', "Unknown house command received, %s" % str(err))
-
-        unitcode = int(ByteToHex(message[5]), 16)
-        try:
-            command = rfx.rfx_subtype_10_cmnd[ByteToHex(message[6])]
-        except Exception as err:
-            command = '0x' + command
-            log_me('error', "Unknown command received, %s" % str(err))
-
-        signal = rfxdecode.decode_signal(message[7])
-
-        try:
-            display_subtype = str(rfx.rfx_subtype_10[subtype])
-        except Exception as err:
-            display_subtype = '0x' + subtype
-            log_me('error', "Unknown subtype received, %s" % str(err))
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= %s" % display_subtype)
-        log_me('info', "Seqnbr\t\t\t= %s" % str(seqnbr))
-        log_me('info', "Housecode\t\t= %s" % str(housecode))
-        log_me('info', "Unitcode\t\t= %s" % str(unitcode))
-        log_me('info', "Command\t\t\t= %s" % str(command))
-        log_me('info', "Signal level\t\t= %s" % str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, display_subtype, seqnbr, [
-            ('signal_level', signal),
-            ('housecode', housecode),
-            ('command', command),
-            ('unitcode', unitcode)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x11 Lighting2
-    # ---------------------------------------
     if packettype == '11':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x1.decode_0x11(message, subtype, seqnbr)
 
-        # DATA
-        sensor_id = ByteToHex(message[4]) + ByteToHex(message[5]) + \
-            ByteToHex(message[6]) + ByteToHex(message[7])
-        unitcode = int(ByteToHex(message[8]), 16)
-        command = rfx.rfx_subtype_11_cmnd[ByteToHex(message[9])]
-        dimlevel = rfx.rfx_subtype_11_dimlevel[ByteToHex(message[10])]
-        signal = rfxdecode.decode_signal(message[11])
-
-        try:
-            display_subtype = str(rfx.rfx_subtype_11[subtype])
-        except Exception as err:
-            display_subtype = '0x' + subtype
-            log_me('error', "Unknown subtype received, %s" % str(err))
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + display_subtype)
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t= " + sensor_id)
-        log_me('info', "Unitcode\t\t= " + str(unitcode))
-        log_me('info', "Command\t\t\t= " + command)
-        log_me('info', "Dim level\t\t= " + dimlevel + "%")
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, display_subtype, seqnbr, [
-            ('signal_level', signal),
-            ('id', sensor_id),
-            ('command', command),
-            ('unitcode', unitcode),
-            ('dim_level', dimlevel)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x12 Lighting3
-    # ---------------------------------------
     if packettype == '12':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x1.decode_0x12(message, subtype, seqnbr)
 
-        # DATA
-        system = ByteToHex(message[4])
-
-        if testBit(int(ByteToHex(message[5]), 16), 0) == 1:
-            channel = 1
-        elif testBit(int(ByteToHex(message[5]), 16), 1) == 2:
-            channel = 2
-        elif testBit(int(ByteToHex(message[5]), 16), 2) == 4:
-            channel = 3
-        elif testBit(int(ByteToHex(message[5]), 16), 3) == 8:
-            channel = 4
-        elif testBit(int(ByteToHex(message[5]), 16), 4) == 16:
-            channel = 5
-        elif testBit(int(ByteToHex(message[5]), 16), 5) == 32:
-            channel = 6
-        elif testBit(int(ByteToHex(message[5]), 16), 6) == 64:
-            channel = 7
-        elif testBit(int(ByteToHex(message[5]), 16), 7) == 128:
-            channel = 8
-        elif testBit(int(ByteToHex(message[6]), 16), 0) == 1:
-            channel = 9
-        elif testBit(int(ByteToHex(message[6]), 16), 1) == 2:
-            channel = 10
-        else:
-            channel = 255
-
-        command = rfx.rfx_subtype_12_cmnd[ByteToHex(message[7])]
-        battery = rfxdecode.decode_battery(message[8])
-        signal = rfxdecode.decode_signal(message[8])
-
-        try:
-            display_subtype = str(rfx.rfx_subtype_12[subtype])
-        except Exception as err:
-            display_subtype = '0x' + subtype
-            log_me('error', "Unknown subtype received, %s" % str(err))
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + display_subtype)
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "System\t\t\t= " + system)
-        log_me('info', "Channel\t\t\t= " + str(channel))
-        log_me('info', "Command\t\t\t= " + command)
-        log_me('info', "Battery\t\t\t= " + str(battery))
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, display_subtype, seqnbr, [
-            ('battery', battery),
-            ('signal', signal),
-            ('system', system),
-            ('command', command),
-            ('channel', channel)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x13 Lighting4
-    # ---------------------------------------
     if packettype == '13':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x1.decode_0x13(message, subtype, seqnbr)
 
-        # DATA
-        code = ByteToHex(message[4]) + ByteToHex(message[5]) + ByteToHex(message[6])
-        code1 = dec2bin(int(ByteToHex(message[4]), 16))
-        code2 = dec2bin(int(ByteToHex(message[5]), 16))
-        code3 = dec2bin(int(ByteToHex(message[6]), 16))
-        code_bin = code1 + " " + code2 + " " + code3
-        pulse = ((int(ByteToHex(message[7]), 16) * 256) + int(ByteToHex(message[8]), 16))
-        signal = rfxdecode.decode_signal(message[9])
-
-        try:
-            display_subtype = str(rfx.rfx_subtype_13[subtype])
-        except Exception as err:
-            display_subtype = '0x' + subtype
-            log_me('error', "Unknown subtype received, %s" % str(err))
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + display_subtype)
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Code\t\t\t= " + code)
-        log_me('info', "S1-S24\t\t\t= "  + code_bin)
-        log_me('info', "Pulse\t\t\t= " + str(pulse) + " usec")
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, display_subtype, seqnbr, [
-            ('code', code),
-            ('s1_s24', code_bin),
-            ('pulse', pulse),
-            ('pulse_usec', signal)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x14 Lighting5
-    # ---------------------------------------
     if packettype == '14':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x1.decode_0x14(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2 + ByteToHex(message[6])
-        unitcode = int(ByteToHex(message[7]), 16)
-
-        if subtype == '00':
-            command = rfx.rfx_subtype_14_cmnd0[ByteToHex(message[8])]
-        elif subtype == '01':
-            command = rfx.rfx_subtype_14_cmnd1[ByteToHex(message[8])]
-        elif subtype == '02':
-            command = rfx.rfx_subtype_14_cmnd2[ByteToHex(message[8])]
-        elif subtype == '03':
-            command = rfx.rfx_subtype_14_cmnd3[ByteToHex(message[8])]
-        elif subtype == '04':
-            command = rfx.rfx_subtype_14_cmnd4[ByteToHex(message[8])]
-        elif subtype == '05':
-            command = rfx.rfx_subtype_14_cmnd5[ByteToHex(message[8])]
-        elif subtype == '06':
-            try:
-                command = rfx.rfx_subtype_14_cmnd5[ByteToHex(message[8])]
-            except Exception as err:
-                # if the value is between x06 and x84 it is 'select color'
-                # This should be improved, as it will not catch unknown values
-                log_me('error', "Value is not in the sensor list")
-                command = "Select Color"
-
-        else:
-            command = "Unknown"
-
-        if subtype == "00":
-            level = ByteToHex(message[9])
-        else:
-            level = 0
-
-        signal = rfxdecode.decode_signal(message[10])
-
-        try:
-            display_subtype = rfx.rfx_subtype_14[subtype]
-        except Exception as err:
-            log_me('error', "Invalid subtype")
-            display_subtype = '0x' + subtype
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= %s" % display_subtype)
-        log_me('info', "Seqnbr\t\t\t= %s" % str(seqnbr))
-        log_me('info', "Id\t\t\t= %s" % str(sensor_id))
-
-        if subtype != '03' and subtype != '05':
-            log_me('info', "Unitcode\t\t= Not used")
-            unitcode = 0
-        else:
-            log_me('info', "Unitcode\t\t= " + str(unitcode))
-
-        log_me('info', "Command\t\t\t= " + command)
-
-        if subtype == '00':
-            log_me('info', "Level\t\t\t= " + level)
-
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        if subtype == '00':
-            output_me(timestamp, message, packettype, display_subtype, seqnbr, [
-                ('id', sensor_id),
-                ('unitcode', unitcode),
-                ('command', command),
-                ('level', level),
-                ('signal_level', signal)])
-        else:
-            output_me(timestamp, message, packettype, display_subtype, seqnbr, [
-                ('id', sensor_id),
-                ('unitcode', unitcode),
-                ('command', command),
-                ('signal_level', signal)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x15 Lighting6
-    # Credit: Dimitri Clatot
-    # ---------------------------------------
     if packettype == '15':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x1.decode_0x15(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-        groupcode = rfx.rfx_subtype_15_groupcode[ByteToHex(message[6])]
-        unitcode = int(ByteToHex(message[7]), 16)
-        command = rfx.rfx_subtype_15_cmnd[ByteToHex(message[8])]
-        command_seqnbr = ByteToHex(message[9])
-        seqnbr2 = ByteToHex(message[10])
-        signal = rfxdecode.decode_signal(message[11])
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_15[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "ID\t\t\t= "  + sensor_id)
-        log_me('info', "Groupcode\t\t= " + groupcode)
-        log_me('info', "Unitcode\t\t= " + str(unitcode))
-        log_me('info', "Command\t\t\t= " + command)
-        log_me('info', "Command seqnbr\t\t= " + command_seqnbr)
-        log_me('info', "Seqnbr2\t\t\t= %s" % str(seqnbr2))
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [
-            ('id', sensor_id),
-            ('signal_level', signal),
-            ('groupcode', groupcode),
-            ('command', command),
-            ('unitcode', unitcode),
-            ('command_seqnbr', command_seqnbr)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # --------------------------------------------------------------------------
     # 0x16 Chime
-    # --------------------------------------------------------------------------
     if packettype == "16":
-        log_me('debug', "Decode packetType 0x%s - Start" % str(packettype))
         decoded = True
+        metadata, output_extra = rfxdecode0x1.decode_0x16(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-
-        if subtype == "00":
-            try:
-                sound = rfx.rfx_subtype_16_sound[ByteToHex(message[6])]
-            except Exception as err:
-                log_me('error', err)
-                sound = "Unknown"
-
-        elif subtype == "01":
-            sound = str(ByteToHex(message[6]))
-
-        elif subtype == "02" or subtype == "03" or subtype == "04":
-            sound = None
-
-        try:
-            signal = rfxdecode.decode_signal(message[7])
-        except Exception as err:
-            log_me('error', err)
-            signal = "Error"
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= %s" % str(rfx.rfx_subtype_16[subtype]))
-        log_me('info', "Seqnbr\t\t\t= %s" % str(seqnbr))
-        log_me('info', "ID\t\t\t= %s" % str(sensor_id))
-        if sound != None:
-            log_me('info', "Sound\t\t\t= %s" % str(sound))
-        log_me('info', "Signal level\t\t= %s" % str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [
-            ('id', sensor_id),
-            ('signal_level', signal)])
-
-        log_me('debug', "Decode packetType 0x%s - End" % packettype)
-
-
-    # ---------------------------------------
     # 0x17 Fan (Transmitter only)
-    # ---------------------------------------
     if packettype == '17':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x1.decode_0x17(subtype, seqnbr)
 
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_18[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('warning', "This sensor is not completed.")
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x18 Curtain1 (Transmitter only)
-    # ---------------------------------------
     if packettype == '18':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x1.decode_0x18(subtype, seqnbr)
 
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_18[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('warning', "This sensor is not completed.")
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x19 Blinds1
-    # ---------------------------------------
     if packettype == '19':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
-
         decoded = True
+        metadata, output_extra = rfxdecode0x1.decode_0x19(subtype, seqnbr)
 
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_19[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('warning', "This sensor is not completed.")
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x1A RTS
-    # ---------------------------------------
     if packettype == '1A':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x1.decode_0x1a(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2 + ByteToHex(message[6])
-
-        try:
-            subtype_str = rfx.rfx_subtype_1A[subtype]
-        except Exception as err:
-            log_me('error', "Unknown subtype")
-            subtype = "Unknown subtype"
-
-        if subtype == "00":
-            unitcode = ByteToHex(message[6])
-            if unitcode == "00":
-                unitcode_str = "All"
-            else:
-                unitcode_str = str(unitcode)
-        elif subtype == "01":
-            unitcode = ByteToHex(message[6])
-            unitcode_str = str(unitcode)
-
-        command = ByteToHex(message[7])
-        try:
-            command_str = rfx.rfx_subtype_1A_cmnd[command]
-        except Exception as err:
-            log_me('error', "Unknown command received")
-            command_str = "Unknown command received"
-
-        signal = rfxdecode.decode_signal(message[8])
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= %s" % str(subtype_str))
-        log_me('info', "Seqnbr\t\t\t= %s" % str(seqnbr))
-        log_me('info', "Id1-3\t\t\t= %s" % str(sensor_id))
-        log_me('info', "Unitcode\t\t= %s" % unitcode_str)
-        log_me('info', "Command\t\t\t= %s" % command_str)
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [
-            ('signal_level', signal),
-            ('id', sensor_id),
-            ('unicode', unitcode_str),
-            ('command', command_str)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x20 Security1
-    # Credit: Dimitri Clatot
-    # ---------------------------------------
     if packettype == '20':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x2.decode_0x20(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2 + ByteToHex(message[6])
-        status = rfx.rfx_subtype_20_status[ByteToHex(message[7])]
-        signal = rfxdecode.decode_signal(message[8])
-        battery = rfxdecode.decode_battery(message[8])
-        try:
-            display_subtype = rfx.rfx_subtype_20[subtype]
-        except KeyError:
-            display_subtype = '0x' + subtype
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + display_subtype)
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t\t= " + sensor_id)
-        log_me('info', "Status\t\t\t= " + status)
-        log_me('info', "Battery\t\t\t= " + str(battery))
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, display_subtype, seqnbr, [
-            ('battery', battery),
-            ('signal_level', signal),
-            ('id', sensor_id),
-            ('status', status)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x28 Camera1
-    # ---------------------------------------
     if packettype == '28':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
-
         decoded = True
+        metadata, output_extra = rfxdecode0x2.decode_0x28(subtype, seqnbr)
 
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_28[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('warning', "This sensor is not completed.")
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x30 Remote control and IR
-    # ---------------------------------------
     if packettype == '30':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x3.decode_0x30(message, subtype, seqnbr, id1)
 
-        # Command type
-        if subtype == '04':
-            if ByteToHex(message[7]) == '00':
-                cmndtype = "PC"
-            elif ByteToHex(message[7]) == '01':
-                cmndtype = "AUX1"
-            elif ByteToHex(message[7]) == '02':
-                cmndtype = "AUX2"
-            elif ByteToHex(message[7]) == '03':
-                cmndtype = "AUX3"
-            elif ByteToHex(message[7]) == '04':
-                cmndtype = "AUX4"
-            else:
-                cmndtype = "Unknown"
-
-        # Command
-        if subtype == '00':
-            command = rfx.rfx_subtype_30_atiremotewonder[ByteToHex(message[5])]
-        elif subtype == '01':
-            command = "Not implemented in RFXCMD"
-        elif subtype == '02':
-            command = rfx.rfx_subtype_30_medion[ByteToHex(message[5])]
-        elif subtype == '03':
-            command = "Not implemented in RFXCMD"
-        elif subtype == '04':
-            command = "Not implemented in RFXCMD"
-
-        toggle = ByteToHex(message[6])
-
-        if subtype == '00' or subtype == '02' or subtype == '03':
-            signal = rfxdecode.decode_signal(message[6])
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_30[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t= " + id1)
-        log_me('info', "Command\t\t\t= " + command)
-        if subtype == '04':
-            log_me('info', "Toggle\t\t\t= " + toggle)
-        if subtype == '04':
-            log_me('info', "CommandType\t= " + cmndtype)
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        if subtype == '00' or subtype == '02':
-            output_me(timestamp, message, packettype, subtype, seqnbr, [
-                ('signal_level', signal),
-                ('id', id1),
-                ('command', command)])
-        elif subtype == '04' or subtype == '01' or subtype == '03':
-            output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
-    # 0x40 - Thermostat1
-    # Credit: Jean-François Pucheu
-    # ---------------------------------------
+    # 0x40 Thermostat1
     if packettype == '40':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x4.decode_0x40(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-        temperature = int(ByteToHex(message[6]), 16)
-        temperature_set = int(ByteToHex(message[7]), 16)
-        status_temp = str(testBit(int(ByteToHex(message[8]), 16), 0) + \
-                          testBit(int(ByteToHex(message[8]), 16), 1))
-        status = rfx.rfx_subtype_40_status[status_temp]
-        if testBit(int(ByteToHex(message[8]), 16), 7) == 128:
-            mode = rfx.rfx_subtype_40_mode['1']
-        else:
-            mode = rfx.rfx_subtype_40_mode['0']
-        signal = rfxdecode.decode_signal(message[9])
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_40[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t= " + sensor_id)
-        log_me('info', "Temperature\t\t= " + str(temperature) + " C")
-        log_me('info', "Temperature set\t\t= " + str(temperature_set) + " C")
-        log_me('info', "Mode\t\t\t= " + mode)
-        log_me('info', "Status\t\t\t= " + status)
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [
-            ('signal_level', signal),
-            ('mode', mode),
-            ('status', status),
-            ('temperature_set', temperature_set),
-            ('temperature', temperature)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x41 Thermostat2
-    # ---------------------------------------
     if packettype == '41':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x4.decode_0x41(subtype, seqnbr)
 
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_41[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x42 Thermostat3
-    # ---------------------------------------
     if packettype == '42':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x4.decode_0x42(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        if subtype == '00':
-            unitcode = ByteToHex(message[4])
-        elif subtype == '01':
-            unitcode = ByteToHex(message[4]) + ByteToHex(message[5]) + ByteToHex(message[6])
-        else:
-            unitcode = "00"
-
-        log_me('debug', "Unitcode: " + unitcode)
-
-        if subtype == '00':
-            command = rfx.rfx_subtype_42_cmd00[ByteToHex(message[7])]
-        elif subtype == '01':
-            command = rfx.rfx_subtype_42_cmd01[ByteToHex(message[7])]
-        else:
-            command = '0'
-
-        log_me('debug', "Command: " + command)
-
-        signal = rfxdecode.decode_signal(message[8])
-
-        # PRINTOUT
-        log_me('debug', "Printout data")
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_42[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Unitcode\t\t= " + unitcode)
-        log_me('info', "Command\t\t\t= " + command)
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [
-            ('signal_level', signal),
-            ('unitcode', unitcode),
-            ('command', command)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
-    # 0x50 - Temperature sensors
-    # ---------------------------------------
+    # 0x50 Temperature sensors
     if packettype == '50':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x50(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-        temperature = rfxdecode.decode_temperature(message[6], message[7])
-        signal = rfxdecode.decode_signal(message[8])
-        battery = rfxdecode.decode_battery(message[8])
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_50[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t= " + sensor_id)
-        log_me('info', "Temperature\t\t= " + temperature + " C")
-        log_me('info', "Battery\t\t\t= " + str(battery))
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [
-            ('id', sensor_id),
-            ('battery', battery),
-            ('signal_level', signal),
-            ('temperature', temperature)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
-    # 0x51 - Humidity sensors
-    # ---------------------------------------
+    # 0x51 Humidity sensors
     if packettype == '51':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x51(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-        humidity = int(ByteToHex(message[6]), 16)
-        humidity_status = rfx.rfx_subtype_51_humstatus[ByteToHex(message[7])]
-        signal = rfxdecode.decode_signal(message[8])
-        battery = rfxdecode.decode_battery(message[8])
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_51[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t= " + sensor_id)
-        log_me('info', "Humidity\t\t= " + str(humidity))
-        log_me('info', "Humidity Status\t\t= " + humidity_status)
-        log_me('info', "Battery\t\t\t= " + str(battery))
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [
-            ('id', sensor_id),
-            ('humidity_status', humidity_status),
-            ('humidity', humidity),
-            ('battery', battery),
-            ('signal_level', signal)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
-    # 0x52 - Temperature and humidity sensors
-    # ---------------------------------------
+    # 0x52 Temperature and humidity sensors
     if packettype == '52':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x52(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-        temperature = rfxdecode.decode_temperature(message[6], message[7])
-        humidity = int(ByteToHex(message[8]), 16)
-        humidity_status = rfx.rfx_subtype_52_humstatus[ByteToHex(message[9])]
-        signal = rfxdecode.decode_signal(message[10])
-        battery = rfxdecode.decode_battery(message[10])
+    # 0x53 Barometric
+    if packettype == '53':
+        decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x53(subtype, seqnbr)
 
-        # PRINTOUT
-        log_me('debug', "Print data stdout")
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_52[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t= " + sensor_id)
-        log_me('info', "Temperature\t\t= " + temperature + " C")
-        log_me('info', "Humidity\t\t= " + str(humidity) + "%")
-        log_me('info', "Humidity Status\t\t= " + humidity_status)
-        log_me('info', "Battery\t\t\t= " + str(battery))
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [
-            ('id', sensor_id),
-            ('humidity_status', humidity_status),
-            ('temperature', temperature),
-            ('humidity', humidity),
-            ('battery', battery),
-            ('signal_level', signal)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
-    # 0x53 - Barometric
-    # RESERVED FOR FUTURE
-    # ---------------------------------------
-
-    # ---------------------------------------
-    # 0x54 - Temperature, humidity and barometric sensors
-    # Credit: Jean-Baptiste Bodart
-    # ---------------------------------------
+    # 0x54 Temperature, humidity and barometric sensors
     if packettype == '54':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x54(message, subtype, seqnbr, id1, id2, \
+            config.barometric)
 
-        # DATA
-        sensor_id = id1 + id2
-        temperature = rfxdecode.decode_temperature(message[6], message[7])
-        humidity = int(ByteToHex(message[8]), 16)
-        try:
-            humidity_status = rfx.rfx_subtype_54_humstatus[ByteToHex(message[9])]
-        except Exception, err:
-            log_me('error', err)
-            log_me('warning', "Humidity status [" + ByteToHex(message[9]) + \
-                   "] is unknown (" + ByteToHex(message) + ")")
-            humidity_status = "Unknown"
-        barometric_high = ByteToHex(message[10])
-        barometric_low = ByteToHex(message[11])
-        barometric_high = clearBit(int(barometric_high, 16), 7)
-        barometric_high = barometric_high << 8
-        barometric = (barometric_high + int(barometric_low, 16))
-        if config.barometric != 0:
-            barometric = int(barometric) + int(config.barometric)
-        forecast = rfx.rfx_subtype_54_forecast[ByteToHex(message[12])]
-        signal = rfxdecode.decode_signal(message[13])
-        battery = rfxdecode.decode_battery(message[13])
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= %s " % str(rfx.rfx_subtype_54[subtype]))
-        log_me('info', "Seqnbr\t\t\t= %s " % str(seqnbr))
-        log_me('info', "Id\t\t\t= %s " % str(sensor_id))
-        log_me('info', "Temperature\t\t= %s C " % str(temperature))
-        log_me('info', "Humidity\t\t= %s " % str(humidity))
-        if humidity_status:
-            log_me('info', "Humidity Status\t\t= %s " % str(humidity_status))
-        log_me('info', "Barometric pressure\t= %s hPa" % str(barometric))
-        log_me('info', "Forecast Status\t\t= %s " % str(forecast))
-        log_me('info', "Signal level\t\t= %s " % str(signal))
-        log_me('info', "Battery\t\t\t= %s " % str(battery))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [
-            ('battery', battery),
-            ('signal_level', signal),
-            ('id', sensor_id),
-            ('forecast_status', forecast),
-            ('humidity_status', humidity_status),
-            ('humidity', humidity),
-            ('barometric_pressure', barometric),
-            ('temperature', temperature)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
-    # 0x55 - Rain sensors
-    # ---------------------------------------
+    # 0x55 Rain sensors
     if packettype == '55':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x55(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-        rainrate_high = ByteToHex(message[6])
-        rainrate_low = ByteToHex(message[7])
-        if subtype == '01':
-            rainrate = int(rainrate_high, 16) * 0x100 + int(rainrate_low, 16)
-        elif subtype == '02':
-            rainrate = float(int(rainrate_high, 16) * 0x100 + int(rainrate_low, 16)) / 100
-        else:
-            rainrate = 0
-        raintotal1 = ByteToHex(message[8])
-        raintotal2 = ByteToHex(message[9])
-        raintotal3 = ByteToHex(message[10])
-        if subtype != '06':
-            raintotal = float((int(raintotal1, 16) * 0x1000) + \
-                        (int(raintotal2, 16) * 0x100) + int(raintotal3, 16)) / 10
-        else:
-            raintotal = 0
-        signal = rfxdecode.decode_signal(message[11])
-        battery = rfxdecode.decode_battery(message[11])
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_55[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t= " + sensor_id)
-
-        if subtype == '01' or subtype == '02':
-            log_me('info', "Rain rate\t\t= " + str(rainrate) + " mm/hr")
-
-        if subtype != '06':
-            log_me('info', "Raintotal:\t\t= " + str(raintotal) + " mm")
-        else:
-            log_me('info', "Raintotal:\t\t= Not implemented in rfxcmd, need example data")
-
-        log_me('info', "Battery\t\t\t= " + str(battery))
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [
-            ('rainrate', rainrate),
-            ('battery', battery),
-            ('id', sensor_id),
-            ('signal_level', signal)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
-    # 0x56 - Wind sensors
-    # ---------------------------------------
+    # 0x56 Wind sensors
     if packettype == '56':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x56(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-        direction = ((int(ByteToHex(message[6]), 16) * 256) + \
-                    int(ByteToHex(message[7]), 16))
-        if subtype != "05":
-            av_speed = ((int(ByteToHex(message[8]), 16) * 256) + \
-                       int(ByteToHex(message[9]), 16)) * 0.1
-        else:
-            av_speed = 0
-        gust = ((int(ByteToHex(message[10]), 16) * 256) + \
-               int(ByteToHex(message[11]), 16)) * 0.1
-        if subtype == "04":
-            temperature = rfxdecode.decode_temperature(message[12], message[13])
-        else:
-            temperature = 0
-        if subtype == "04":
-            windchill = rfxdecode.decode_temperature(message[14], message[15])
-        else:
-            windchill = 0
-        signal = rfxdecode.decode_signal(message[16])
-        battery = rfxdecode.decode_battery(message[16])
-        display_subtype = rfx.rfx_subtype_56[subtype]
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + display_subtype)
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t= " + sensor_id)
-        log_me('info', "Wind direction\t\t= " + str(direction) + " degrees")
-        if subtype != "05":
-            log_me('info', "Average wind\t\t= " + str(av_speed) + " mtr/sec")
-        if subtype == "04":
-            log_me('info', "Temperature\t\t= " + str(temperature) + " C")
-            log_me('info', "Wind chill\t\t= " + str(windchill) + " C")
-        log_me('info', "Windgust\t\t= " + str(gust) + " mtr/sec")
-        log_me('info', "Battery\t\t\t= " + str(battery))
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, display_subtype, seqnbr, [
-            ('battery', battery),
-            ('signal_level', signal),
-            ('id', sensor_id),
-            ('temperature', temperature),
-            ('wind_average_speed', av_speed),
-            ('wind_gust', gust),
-            ('wind_direction', direction),
-            ('wind_chill', windchill)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x57 UV Sensor
-    # ---------------------------------------
     if packettype == '57':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x57(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-        ultra_violet = int(ByteToHex(message[6]), 16) * 10
-        temperature = rfxdecode.decode_temperature(message[6], message[8])
-        signal = rfxdecode.decode_signal(message[9])
-        battery = rfxdecode.decode_battery(message[9])
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_57[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t= " + sensor_id)
-        log_me('info', "UV\t\t\t= " + str(ultra_violet))
-        if subtype == '03':
-            log_me('info', "Temperature\t\t= " + temperature + " C")
-        log_me('info', "Battery\t\t\t= " + str(battery))
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        if subtype == '03':
-            output_me(timestamp, message, packettype, subtype, seqnbr, [
-                ('id', sensor_id),
-                ('ultra_violet', ultra_violet),
-                ('temperature', temperature),
-                ('battery', battery),
-                ('signal_level', signal)])
-        else:
-            output_me(timestamp, message, packettype, subtype, seqnbr, [
-                ('id', sensor_id),
-                ('ultra_violet', ultra_violet),
-                ('battery', battery),
-                ('signal_level', signal)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x58 Date/Time sensor
-    # ---------------------------------------
     if packettype == '58':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x58(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-        date_yy = int(ByteToHex(message[6]), 16)
-        date_mm = int(ByteToHex(message[7]), 16)
-        date_dd = int(ByteToHex(message[8]), 16)
-        date_string = "20%s-%s-%s" % (
-            str(date_yy).zfill(2),
-            str(date_mm).zfill(2),
-            str(date_dd).zfill(2))
-        date_dow = int(ByteToHex(message[9]), 16)
-        time_hr = int(ByteToHex(message[10]), 16)
-        time_min = int(ByteToHex(message[11]), 16)
-        time_sec = int(ByteToHex(message[12]), 16)
-        time_string = "%s:%s:%s" % (str(time_hr), str(time_min), str(time_sec))
-        datetime_string = "%s %s" % (str(date_string), str(time_string))
-        log_me('debug', "DateTime: %s" % str(datetime_string))
-        signal = rfxdecode.decode_signal(message[13])
-        battery = rfxdecode.decode_battery(message[13])
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= %s" % str(rfx.rfx_subtype_58[subtype]))
-        log_me('info', "Seqnbr\t\t\t= %s" % str(seqnbr))
-        log_me('info', "Id\t\t\t= %s" % str(sensor_id))
-        log_me('info', "Time\t\t\t= %s" % str(time_string))
-        log_me('info', "Date (yy-mm-dd)\t\t= %s" % str(date_string))
-        log_me('info', "Day of week (1-7)\t= %s" % str(date_dow))
-        log_me('info', "Battery\t\t\t= %s" % str(battery))
-        log_me('info', "Signal level\t\t= %s" % str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [
-            ('id', sensor_id),
-            ('time', time_string),
-            ('date', date_string),
-            ('day_of_week', date_dow),
-            ('battery', battery),
-            ('signal_level', signal)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x59 Current Sensor
-    # ---------------------------------------
     if packettype == '59':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x59(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-        count = int(ByteToHex(message[6]), 16)
-        channel1 = (int(ByteToHex(message[7]), 16) * 0x100 + int(ByteToHex(message[8]), 16)) * 0.1
-        channel2 = (int(ByteToHex(message[9]), 16) * 0x100 + int(ByteToHex(message[10]), 16)) * 0.1
-        channel3 = (int(ByteToHex(message[11]), 16) * 0x100 + int(ByteToHex(message[12]), 16)) * 0.1
-        signal = rfxdecode.decode_signal(message[13])
-        battery = rfxdecode.decode_battery(message[13])
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_5A[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t= " + sensor_id)
-        log_me('info', "Counter\t\t\t= " + str(count))
-        log_me('info', "Channel 1\t\t= " + str(channel1) + "A")
-        log_me('info', "Channel 2\t\t= " + str(channel2) + "A")
-        log_me('info', "Channel 3\t\t= " + str(channel3) + "A")
-        log_me('info', "Battery\t\t\t= " + str(battery))
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x5A Energy sensor
-    # Credit: Jean-Michel ROY
-    # ---------------------------------------
     if packettype == '5A':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x5a(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-        signal = rfxdecode.decode_signal(message[17])
-        count = int(ByteToHex(message[6]), 16)
-        battery = rfxdecode.decode_battery(message[17])
-        instant = int(ByteToHex(message[7]), 16) * 0x1000000 + \
-                  int(ByteToHex(message[8]), 16) * 0x10000 + \
-                  int(ByteToHex(message[9]), 16) * 0x100  + \
-                  int(ByteToHex(message[10]), 16)
-        usage = int((
-            int(ByteToHex(message[11]), 16) * 0x10000000000 + \
-            int(ByteToHex(message[12]), 16) * 0x100000000 + \
-            int(ByteToHex(message[13]), 16) * 0x1000000 + \
-            int(ByteToHex(message[14]), 16) * 0x10000 + \
-            int(ByteToHex(message[15]), 16) * 0x100 + \
-            int(ByteToHex(message[16]), 16)) / 223.666)
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_5A[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t= " + sensor_id)
-        log_me('info', "Count\t\t\t= " + str(count))
-        log_me('info', "Instant usage\t\t= " + str(instant) + " Watt")
-        log_me('info', "Total usage\t\t= " + str(usage) + " Wh")
-        log_me('info', "Battery\t\t\t= " + str(battery))
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [
-            ('id', sensor_id),
-            ('instant_usage', instant),
-            ('total_usage', usage),
-            ('battery', battery),
-            ('signal_level', signal)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x5B Current Sensor
-    # ---------------------------------------
     if packettype == '5B':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x5b(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-        count = int(ByteToHex(message[6]), 16)
-        channel1 = (int(ByteToHex(message[7]), 16) * 0x100 + int(ByteToHex(message[8]), 16)) * 0.1
-        channel2 = (int(ByteToHex(message[9]), 16) * 0x100 + int(ByteToHex(message[10]), 16)) * 0.1
-        channel3 = (int(ByteToHex(message[11]), 16) * 0x100 + int(ByteToHex(message[12]), 16)) * 0.1
-        total = float((
-            int(ByteToHex(message[13]), 16) * 0x10000000000 + \
-            int(ByteToHex(message[14]), 16) * 0x100000000 + \
-            int(ByteToHex(message[15]), 16) * 0x1000000 + \
-            int(ByteToHex(message[16]), 16) * 0x10000 + \
-            int(ByteToHex(message[17]), 16) * 0x100 + \
-            int(ByteToHex(message[18]), 16)) / 223.666)
-        signal = rfxdecode.decode_signal(message[19])
-        battery = rfxdecode.decode_battery(message[19])
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_5B[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t= " + sensor_id)
-        log_me('info', "Counter\t\t\t= " + str(count))
-        log_me('info', "Channel 1\t\t= " + str(channel1) + "A")
-        log_me('info', "Channel 2\t\t= " + str(channel2) + "A")
-        log_me('info', "Channel 3\t\t= " + str(channel3) + "A")
-        if total != 0:
-            log_me('info', "Total\t\t\t= %s Wh" % str(round(total, 1)))
-        log_me('info', "Battery\t\t\t= " + str(battery))
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x5C Power Sensors
-    # ---------------------------------------
     if packettype == '5C':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x5c(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-        voltage = int(ByteToHex(message[6]), 16)
-        current = (int(ByteToHex(message[7]), 16) * 0x100 + int(ByteToHex(message[8]), 16)) * 0.01
-        power = (int(ByteToHex(message[9]), 16) * 0x100 + int(ByteToHex(message[10]), 16)) * 0.1
-        energy = (int(ByteToHex(message[11]), 16) * 0x100 + int(ByteToHex(message[12]), 16)) * 0.01
-        powerfactor = (int(ByteToHex(message[13]), 16)) * 0.01
-        freq = int(ByteToHex(message[14]), 16)
-        signal = rfxdecode.decode_signal(message[15])
+    # 0x5D
+    if packettype == '5D':
+        decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x5d(subtype, seqnbr)
 
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= %s" % str(rfx.rfx_subtype_5C[subtype]))
-        log_me('info', "Seqnbr\t\t\t= %s" % str(seqnbr))
-        log_me('info', "Id\t\t\t= %s" % str(sensor_id))
-        log_me('info', "Voltage\t\t\t= %s Volt" % (str(voltage)))
-        log_me('info', "Current\t\t\t= %s Ampere" % str(current))
-        log_me('info', "Instant power\t\t= %s Watt" % str(power))
-        log_me('info', "Total usage\t\t= %s kWh" % str(energy))
-        log_me('info', "Power factor\t\t= %s " % str(powerfactor))
-        log_me('info', "Frequency\t\t= %s Hz" % str(freq))
-        log_me('info', "Signal level\t\t= %s" % str(signal))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x5E Gas Usage Sensor
-    # ---------------------------------------
     if packettype == '5E':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
-
         decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x5e(subtype, seqnbr)
 
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_5E[subtype])
-        log_me('warning', "This sensor is not completed.")
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x5F Water Usage Sensor
-    # ---------------------------------------
     if packettype == '5F':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
-
         decoded = True
+        metadata, output_extra = rfxdecode0x5.decode_0x5f(subtype, seqnbr)
 
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_5F[subtype])
-        log_me('warning', "This sensor is not completed.")
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x70 RFXsensor
-    # ---------------------------------------
     if packettype == '70':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
+        metadata, output_extra = rfxdecode0x7.decode_0x70(message, subtype, seqnbr, id1)
 
-        # DATA
-        if subtype == '00':
-            temperature = float(rfxdecode.decode_temperature(message[5], message[6]))
-            temperature = temperature * 0.1
-        else:
-            temperature = 0
-        if subtype == '01' or subtype == '02':
-            voltage_hi = int(ByteToHex(message[5]), 16) * 256
-            voltage_lo = int(ByteToHex(message[6]), 16)
-            voltage = voltage_hi + voltage_lo
-        else:
-            voltage = 0
-        signal = rfxdecode.decode_signal(message[7])
-
-        if subtype == '03':
-            sensor_message = rfx.rfx_subtype_70_msg03[message[6]]
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_70[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t= " + id1)
-
-        if subtype == '00':
-            log_me('info', "Temperature\t\t= " + str(temperature) + " C")
-
-        if subtype == '01' or subtype == '02':
-            log_me('info', "Voltage\t\t\t= " + str(voltage) + " mV")
-
-        if subtype == '03':
-            log_me('info', "Message\t\t\t= " + sensor_message)
-
-        log_me('info', "Signal level\t\t= " + str(signal))
-
-        # OUTPUT
-        if subtype == '00':
-            output_me(timestamp, message, packettype, subtype, seqnbr, [
-                ('signal_level', signal),
-                ('id', id1),
-                ('temperature', temperature)])
-        if subtype == '01' or subtype == '02':
-            output_me(timestamp, message, packettype, subtype, seqnbr, [
-                ('signal_level', signal),
-                ('id', id1),
-                ('voltage', voltage)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x71 RFXmeter
-    # ---------------------------------------
     if packettype == '71':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
-
         decoded = True
+        metadata, output_extra = rfxdecode0x7.decode_0x71(message, subtype, seqnbr, id1, id2)
 
-        # DATA
-        sensor_id = id1 + id2
-        sensor_power = ''
-
-        try:
-            sensor_power = rfxdecode.decode_power(message[7], message[8], message[9])
-        except Exception, err:
-            log_me('error', err)
-
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_71[subtype])
-        log_me('info', "Seqnbr\t\t\t= " + seqnbr)
-        log_me('info', "Id\t\t\t= " + id1)
-        log_me('info', "Power\t\t\t= " + str(sensor_power))
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [
-            ('id', sensor_id),
-            ('power', sensor_power)])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # 0x72 FS20
-    # ---------------------------------------
     if packettype == '72':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
-
         decoded = True
+        metadata, output_extra = rfxdecode0x7.decode_0x72(subtype, seqnbr)
 
-        # PRINTOUT
-        log_me('info', "Subtype\t\t\t= " + rfx.rfx_subtype_72[subtype])
-        log_me('warning', "This sensor is not completed.")
-
-        # OUTPUT
-        output_me(timestamp, message, packettype, subtype, seqnbr, [])
-
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - End")
-
-    # ---------------------------------------
     # Not decoded message
-    # ---------------------------------------
 
     # The packet is not decoded, then log_me('info', it on the screen)
     if not decoded:
@@ -2117,6 +753,10 @@ def decode_packet(message):
         log_me('error', "Message: " + ByteToHex(message))
         log_me('info', timestamp + " " + ByteToHex(message))
         log_me('info', "RFXCMD cannot decode message, see http://code.google.com/p/rfxcmd/wiki/")
+
+    # Print result
+    print_decoded(metadata)
+    output_me(timestamp, message, packettype, subtype, seqnbr, output_extra)
 
     # decodePackage END
     return
@@ -2187,8 +827,9 @@ def test_rfx(message):
     # Test the string if it is hex format
     try:
         int(message, 16)
-    except Exception:
+    except TypeError, err:
         log_me('error', "Packet not hex format")
+        log_me('error', err)
         return False
 
     # Check that length is even
@@ -2418,7 +1059,7 @@ def option_simulate(indata):
     # Cut into hex chunks
     try:
         message = indata.decode("hex")
-    except Exception, err:
+    except TypeError, err:
         log_me('error', "the input data is not valid. Line: " + _line())
         log_me('error', err)
         exit(1)
@@ -2451,7 +1092,7 @@ def option_simulate(indata):
     # Verify that the incoming value is hex
     try:
         int(indata, 16)
-    except Exception, err:
+    except ValueError, err:
         log_me('error', "the input data is invalid hex value. Line: " + _line())
         log_me('error', err)
         exit(1)
@@ -2893,6 +1534,19 @@ def log_me(verbosity, message):
     else:
         if cmdarg.printout_debug:
             logger.debug(message)
+
+def print_decoded(metadata, prefix=""):
+    """
+    Display metadata of a list of dict which may contains metadata as value
+    """
+    for i in metadata:
+        if isinstance(i['value'], list):
+            log_me('info', '%s%s:' % (prefix, i['key']))
+            print_decoded(i['value'], prefix="    ")
+        elif 'unit' in i:
+            log_me('info', '%s%s: %s %s' % (prefix, i['key'], i['value'], i['unit']))
+        else:
+            log_me('info', '%s%s: %s' % (prefix, i['key'], i['value']))
 
 # ----------------------------------------------------------------------------
 
