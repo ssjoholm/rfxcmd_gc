@@ -267,7 +267,8 @@ class rfx_data(dict):
                         "03":"MDREMOTE LED dimmer",
                         "04":"Conrad RSL2",
                         "05":"Livolo",
-                        "06":"RGB TRC02"}
+                        "06":"RGB TRC02",
+                        "11":"Chacon Plug 54661"}
     
     # 0x00 LightwaveRF, Siemens
     rfx_subtype_14_cmnd0 = {"00":"Off",
@@ -331,7 +332,11 @@ class rfx_data(dict):
                             "03":"Dim",
                             "04":"Color+",
                             "05":"Color-"}
-    
+
+    # 0x11 Chacon
+    rfx_subtype_14_cmnd11 = {"00":"Off",
+                             "01":"On",
+
     rfx_subtype_15 = {"00":"Blyss"}
 
     rfx_subtype_15_groupcode = {"41":"A",
@@ -402,8 +407,8 @@ class rfx_data(dict):
                         "05":"Visonic PowerCode motion sensor (with alive packets)",
                         "06":"Visonic CodeSecure (no alive packets)",
                         "07":"Visonic PowerCode door/window sensor - auxiliary contact (no alive packets)",
-                        "08":"Meiantech",
-                        "09":"SA30"}
+                        "08":"Meiantech/Atlantic/Aidebao",
+                        "09":"Alecto SA30 smoke detector"}
 
     rfx_subtype_20_status = {"00":"Normal",
                             "01":"Normal delayed",

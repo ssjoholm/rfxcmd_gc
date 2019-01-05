@@ -252,6 +252,9 @@ def decode_0x14(message, subtype, seqnbr, id1, id2):
                 # if the value is between x06 and x84 it is 'select color'
                 # This should be improved, as it will not catch unknown values
                 command = 'Select Color'
+        elif subtype == '11':
+            unitcode = int(ByteToHex(message[7]), 16)
+            command = RFX.rfx_subtype_14_cmnd11[command_hex]
         else:
             command = '0x' + command_hex
     except KeyError:
