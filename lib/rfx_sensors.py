@@ -335,7 +335,7 @@ class rfx_data(dict):
 
     # 0x11 Chacon
     rfx_subtype_14_cmnd11 = {"00":"Off",
-                             "01":"On",
+                             "01":"On"}
 
     rfx_subtype_15 = {"00":"Blyss"}
 
