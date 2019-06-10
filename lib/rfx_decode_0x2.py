@@ -31,7 +31,7 @@ def decode_0x20(message, subtype, seqnbr, id1, id2):
     result.append({'key': 'Id', 'value': sensor_id})
 
     try:
-        status = RFX.rfx_subtype_20[ByteToHex(message[7])]
+        status = RFX.rfx_subtype_20_status[ByteToHex(message[7])]
     except KeyError:
         status = '0x' + ByteToHex(message[7])
     result.append({'key': 'Status', 'value': status})

@@ -54,7 +54,10 @@ def decode_0x01(message):
         result.append({'key': 'Response on command', 'value': 'Invalid'})
 
     # MSG 1
-    result.append({'key': 'Transceiver type', 'value': RFX.rfx_subtype_01_msg1[data['msg1']]})
+    try:
+        result.append({'key': 'Transceiver type', 'value': RFX.rfx_subtype_01_msg1[data['msg1']]})
+    except KeyError:
+        result.append({'key': 'Transceiver type', 'value': 'Invalid'})
 
     # MSG 2
     result.append({'key': 'Firmware version', 'value': int(data['msg2'], 16)})

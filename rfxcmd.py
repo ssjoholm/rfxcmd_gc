@@ -1100,9 +1100,9 @@ def option_simulate(indata):
     # Decode it
     try:
         decode_packet(message)
-    except Exception as err:
+    except KeyError:
         log_me('error', "unrecognizable packet (" + ByteToHex(message) + ") Line: " + _line())
-        log_me('error', err)
+        exit(1)
 
     log_me('debug', 'Exit 0')
     exit(0)
@@ -1489,12 +1489,16 @@ def logger_init(configfile, name, debug):
         log_me('error', "Cannot find configuration file (%s)" % str(configfile))
         return False
 
+
 def output_me(timestamp, message, packettype, subtype, seqnbr, metadata_list):
     """
     This function writes json or csv output in a different file
     """
-    output_file = open('/var/log/output.log', 'a+')
-
+    try:
+        output_file = open('/var/log/output.log', 'a+')
+    except Exception, err:
+        log_me('error', err)
+        return
     rawcmd = ByteToHex(message)
     rawcmd = rawcmd.replace(' ', '')
 
