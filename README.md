@@ -1,5 +1,7 @@
 # rfxcmd
 
+[![Build Status](https://travis-ci.org/nbeguier/rfxcmd.svg?branch=master)](https://travis-ci.org/nbeguier/rfxcmd) [![Python 3.4|3.7](https://img.shields.io/badge/python-3.4|3.7-green.svg)](https://www.python.org/) [![License](https://img.shields.io/badge/Licence-GPLv3-blue.svg)](https://github.com/nbeguier/rfxcmd/blob/master/doc/COPYING)
+
 DESCRIPTION
 
 RFXcmd is Python script that interfaces the RFX USB devices from RFXcom http://www.rfxcom.com.
@@ -8,21 +10,48 @@ All documents and other related to RFXcmd can be found at http://www.rfxcmd.eu
 
 REQUIREMENTS
 
-- Python 2.7, does not work with Python 3.x
-- Tested on Raspberry Pi (Debian Squeezy) with Python 2.6
-- Tested on Mac OSX 10.8.2 with Python 2.7.2
+- Python 3.x
+- Tested on Raspberry Pi (Debian Jessie 8.11) with Python 3.4
+- Tested on Mac OSX 10.8.2 with Python 3.7
 - Tested with RFXCOM device RFXtrx433-USB (v2.1)
 
 ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 EXAMPLES
 
 ```bash
+# Listen from configuration file, in debug mode (-D)
 /opt/rfxcmd/rfxcmd.py -l -o /opt/rfxcmd/config.xml -D
 
-/opt/rfxcmd/rfxcmd.py -l -d /dev/cu.usbserial-XXXXXXX -v
+# Listen from configuration file, in verbose mode (-v)
+/opt/rfxcmd/rfxcmd.py -l -o /opt/rfxcmd/config.xml -D
+
+# Listen from device (-d) in json output
+/opt/rfxcmd/rfxcmd.py -l -d /dev/cu.usbserial-XXXXXXX
+
+# Listen from device (-d) in csv output
+/opt/rfxcmd/rfxcmd.py -l -d /dev/cu.usbserial-XXXXXXX --csv
+
+# Simulate one incoming data message : 0D01FFFFFFFFFFFFFFFFFFFFFFFF
+/opt/rfxcmd/rfxcmd.py -d /dev/cu.usbserial-XXXXXXX -x 0D01FFFFFFFFFFFFFFFFFFFFFFFF
+
+# Send one message to RFX device : 0D01FFFFFFFFFFFFFFFFFFFFFFFF
+/opt/rfxcmd/rfxcmd.py -d /dev/cu.usbserial-XXXXXXX -s 0D01FFFFFFFFFFFFFFFFFFFFFFFF
+
+# Get RFX device status (-f) in verbose mode (-v)
+/opt/rfxcmd/rfxcmd.py -d /dev/cu.usbserial-XXXXXXX -f -v
+
+# RFXPROTO: List all protocols
+/opt/rfxcmd/rfxproto.py -d /dev/cu.usbserial-XXXXXXX -l -D
+
+# RFXSEND: (Need RFXCMD to be running), send raw message 1401FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+/opt/rfxcmd/rfxsend.py -r 1401FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
+# RFXSEND: simulate to send send raw message 1401FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+/opt/rfxcmd/rfxsend.py --simulate -r 1401FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
 ```
 
 ```bash

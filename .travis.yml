@@ -1,0 +1,14 @@
+language: python
+dist: xenial
+python:
+  - 3.4
+  - 3.5
+  - 3.6
+  - 3.7
+  - 3.7-dev
+install:
+  - pip3 install pylint
+  - pip3 install -r requirements.txt
+script:
+  - pylint --py3k --disable=file-builtin rfxcmd.py
+  - pylint rfxcmd.py -d broad-except -d too-many-lines -d too-many-nested-blocks -d too-many-statements -d too-many-branches -d too-few-public-methods -d too-many-instance-attributes -d too-many-arguments -d too-many-locals

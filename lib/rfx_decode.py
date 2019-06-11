@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # coding=UTF-8
 
 # ------------------------------------------------------------------------------
@@ -27,6 +27,13 @@
 #    $Date: 2013-05-01 22:41:36 +0200 (Wed, 01 May 2013) $
 #
 # ------------------------------------------------------------------------------
+
+__author__ = "Sebastian Sjoholm"
+__copyright__ = "Copyright 2012-2014, Sebastian Sjoholm"
+__license__ = "GPL"
+__version__ = "2.0.0"
+__maintainer__ = "Nicolas Béguier"
+__date__ = "$Date: 2019-06-12 08:05:33 +0100 (Thu, 12 Jun 2019) $"
 
 from lib.rfx_utils import ByteToHex, clearBit, testBit
 

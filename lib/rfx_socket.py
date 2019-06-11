@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 
 # ------------------------------------------------------------------------------
@@ -28,11 +28,17 @@
 #
 # ------------------------------------------------------------------------------
 
-from logging import getLogger
-from threading import Thread
+__author__ = "Sebastian Sjoholm"
+__copyright__ = "Copyright 2012-2014, Sebastian Sjoholm"
+__license__ = "GPL"
+__version__ = "2.0.0"
+__maintainer__ = "Nicolas Béguier"
+__date__ = "$Date: 2019-06-12 08:05:33 +0100 (Thu, 12 Jun 2019) $"
 
-from Queue import Queue
-from SocketServer import TCPServer, StreamRequestHandler
+from logging import getLogger
+from queue import Queue
+from socketserver import TCPServer, StreamRequestHandler
+from threading import Thread
 
 LOGGER = getLogger('rfxcmd')
 TCPServer.allow_reuse_address = True
@@ -51,7 +57,7 @@ class NetRequestHandler(StreamRequestHandler):
         self.net_adapter_client_connected = False
         LOGGER.info("Client disconnected from [%s:%d]" % self.client_address)
 
-class RFXcmdSocketAdapter(object, StreamRequestHandler):
+class RFXcmdSocketAdapter(StreamRequestHandler):
     def __init__(self, address='localhost', port=55000):
         self.address = address
         self.port = port

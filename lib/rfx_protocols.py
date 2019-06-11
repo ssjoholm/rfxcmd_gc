@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # coding=UTF-8
 
 """
@@ -30,8 +30,15 @@
 
 # ------------------------------------------------------------------------------
 
+__author__ = "Sebastian Sjoholm"
+__copyright__ = "Copyright 2012-2014, Sebastian Sjoholm"
+__license__ = "GPL"
+__version__ = "2.0.0"
+__maintainer__ = "Nicolas Béguier"
+__date__ = "$Date: 2019-06-12 08:05:33 +0100 (Thu, 12 Jun 2019) $"
+
 import logging
-logger = logging.getLogger('rfxcmd')
+logger = logging.getLogger("rfxcmd")
 
 # ------------------------------------------------------------------------------
 
@@ -54,7 +61,7 @@ def print_protocolfile(protocol_file):
         sys.exit(1)
 
     try:
-        data = xmldoc.documentElement.getElementsByTagName('protocol')
+        data = xmldoc.documentElement.getElementsByTagName("protocol")
     except Exception as err:
         logger.error("Error: %s" % str(err))
         sys.exit(1)
@@ -67,7 +74,7 @@ def print_protocolfile(protocol_file):
 
     for protocol in data:
         try:
-            id = int(protocol.getElementsByTagName('id')[0].childNodes[0].nodeValue)
+            id = int(protocol.getElementsByTagName("id")[0].childNodes[0].nodeValue)
         except Exception as err:
             logger.error("Error: %s" % str(err))
             sys.exit(1)
@@ -77,13 +84,13 @@ def print_protocolfile(protocol_file):
             sys.exit(1)
 
         try:
-            name = protocol.getElementsByTagName('name')[0].childNodes[0].nodeValue
+            name = protocol.getElementsByTagName("name")[0].childNodes[0].nodeValue
         except Exception as err:
             logger.error("Error: %s" % str(err))
             sys.exit(1)
 
         try:
-            state = int(protocol.getElementsByTagName('state')[0].childNodes[0].nodeValue)
+            state = int(protocol.getElementsByTagName("state")[0].childNodes[0].nodeValue)
             if state == 1:
                 state_str = "Enabled"
             else:
@@ -93,7 +100,7 @@ def print_protocolfile(protocol_file):
             sys.exit(1)
 
         if state != 0 and state != 1:
-            print("Error: The state is either 0 or 1, in protocol '%s'" % str(name))
+            print("Error: The state is either 0 or 1, in protocol %s" % str(name))
             sys.exit(1)
 
         print("%-25s %-15s" % (str(name), str(state_str)))
@@ -126,7 +133,7 @@ def set_protocolfile(protocol_file):
         sys.exit(1)
 
     try:
-        data = xmldoc.documentElement.getElementsByTagName('protocol')
+        data = xmldoc.documentElement.getElementsByTagName("protocol")
     except Exception as err:
         logger.error("Error: %s" % str(err))
         sys.exit(1)
@@ -141,7 +148,7 @@ def set_protocolfile(protocol_file):
 
     for protocol in data:
         try:
-            id = int(protocol.getElementsByTagName('id')[0].childNodes[0].nodeValue)
+            id = int(protocol.getElementsByTagName("id")[0].childNodes[0].nodeValue)
         except Exception as err:
             logger.error("Error: %s" % str(err))
             sys.exit(1)
@@ -151,19 +158,19 @@ def set_protocolfile(protocol_file):
             sys.exit(1)
 
         try:
-            name = protocol.getElementsByTagName('name')[0].childNodes[0].nodeValue
+            name = protocol.getElementsByTagName("name")[0].childNodes[0].nodeValue
         except Exception as err:
             logger.error("Error: %s" % str(err))
             sys.exit(1)
 
         try:
-            state = int(protocol.getElementsByTagName('state')[0].childNodes[0].nodeValue)
+            state = int(protocol.getElementsByTagName("state")[0].childNodes[0].nodeValue)
         except Exception as err:
             logger.error("Error: %s" % str(err))
             sys.exit(1)
 
         if state != 0 and state != 1:
-            print("Error: The state is either 0 or 1, in protocol '%s'" % str(name))
+            print("Error: The state is either 0 or 1, in protocol %s" % str(name))
             sys.exit(1)
 
         logger.debug("Id: %s, State: %s, Counter: %s, Name: %s " % (str(id), str(state), str(counter), str(name)))
@@ -172,7 +179,7 @@ def set_protocolfile(protocol_file):
 
     logger.debug("Tags total: %s" % str(counter))
 
-    if counter <> 24:
+    if counter != 24:
         logger.error("Error: There is not 24 protocol tags in protocol file")
         print("Error: There is not 24 protocol tags in protocol file")
         sys.exit(1)

@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+2.0.0
+-----
+
+2019/06/12
+
+### New Features
+  - Python3 support, big refacto
+  - Add tests
+
 1.0.0
 -----
 

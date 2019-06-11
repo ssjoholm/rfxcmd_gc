@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # coding=UTF-8
-
+"""
 # ------------------------------------------------------------------------------
 #
 #   RFXCMD.PY
@@ -46,19 +46,23 @@
 # the breach of the terms and conditions of this license.
 #
 # ------------------------------------------------------------------------------
+"""
+
+from __future__ import absolute_import
 
 __author__ = "Sebastian Sjoholm"
 __copyright__ = "Copyright 2012-2014, Sebastian Sjoholm"
 __license__ = "GPL"
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 __maintainer__ = "Nicolas Béguier"
-__date__ = "$Date: 2018-12-27 14:05:33 +0100 (Thu, 27 Dec 2018) $"
+__date__ = "$Date: 2019-06-12 08:05:33 +0100 (Thu, 12 Jun 2019) $"
 
 # Standard library
+from codecs import decode as codecs_decode
 from inspect import currentframe, getframeinfo
 from json import dumps
 from logging import Formatter, StreamHandler, getLogger, getLevelName, FileHandler
-from optparse import OptionParser
+from argparse import ArgumentParser
 import os
 from time import strftime, sleep
 from traceback import format_exc
@@ -93,104 +97,118 @@ import lib.rfx_protocols as protocol
 # ------------------------------------------------------------------------------
 
 class ConfigData:
+    """
+    Configuration Data
+    """
     def __init__(
             self,
+            barometric=0,
+            daemon_active=False,
+            daemon_pidfile="rfxcmd.pid",
+            device=None,
+            log_msg=False,
+            log_msgfile="",
+            logfile="rfxcmd.log",
+            loglevel="info",
+            process_rfxmsg=True,
+            program_path="",
+            protocol_file="protocol.xml",
+            protocol_startup=False,
             serial_active=True,
             serial_device=None,
             serial_rate=38400,
             serial_timeout=9,
-            loglevel="info",
-            logfile="rfxcmd.log",
-            program_path="",
-            socketserver=False,
             sockethost="",
             socketport="",
+            socketserver=False,
             whitelist_active=False,
             whitelist_file="",
-            daemon_active=False,
-            daemon_pidfile="rfxcmd.pid",
-            process_rfxmsg=True,
-            barometric=0,
-            log_msg=False,
-            log_msgfile="",
-            protocol_startup=False,
-            protocol_file="protocol.xml"
         ):
 
+        self.barometric = barometric
+        self.daemon_active = daemon_active
+        self.daemon_pidfile = daemon_pidfile
+        self.device = device
+        self.log_msg = log_msg
+        self.log_msgfile = log_msgfile
+        self.logfile = logfile
+        self.loglevel = loglevel
+        self.process_rfxmsg = process_rfxmsg
+        self.program_path = program_path
+        self.protocol_file = protocol_file
+        self.protocol_startup = protocol_startup
         self.serial_active = serial_active
         self.serial_device = serial_device
         self.serial_rate = serial_rate
         self.serial_timeout = serial_timeout
-        self.loglevel = loglevel
-        self.logfile = logfile
-        self.program_path = program_path
-        self.socketserver = socketserver
         self.sockethost = sockethost
         self.socketport = socketport
+        self.socketserver = socketserver
         self.whitelist_active = whitelist_active
         self.whitelist_file = whitelist_file
-        self.daemon_active = daemon_active
-        self.daemon_pidfile = daemon_pidfile
-        self.process_rfxmsg = process_rfxmsg
-        self.barometric = barometric
-        self.log_msg = log_msg
-        self.log_msgfile = log_msgfile
-        self.protocol_startup = protocol_startup
-        self.protocol_file = protocol_file
 
 class CmdArgData:
+    """
+    Command Argument Data
+    """
     def __init__(
             self,
-            configfile="",
             action="",
-            rawcmd="",
-            device="",
+            configfile="",
             createpid=False,
+            device="",
             pidfile="",
-            printout_complete=True,
-            printout_csv=False
+            printout_complete=False,
+            printout_csv=False,
+            printout_debug=False,
+            rawcmd="",
         ):
-
-        self.configfile = configfile
         self.action = action
-        self.rawcmd = rawcmd
-        self.device = device
+        self.configfile = configfile
         self.createpid = createpid
+        self.device = device
         self.pidfile = pidfile
         self.printout_complete = printout_complete
         self.printout_csv = printout_csv
+        self.printout_debug = printout_debug
+        self.rawcmd = rawcmd
 
 class RfxCmdData:
+    """
+    RFX Command Data
+    """
     def __init__(
             self,
             reset="0d00000000000000000000000000",
+            save="0d00000006000000000000000000",
             status="0d00000002000000000000000000",
-            save="0d00000006000000000000000000"
         ):
-
         self.reset = reset
-        self.status = status
         self.save = save
+        self.status = status
 
 class SerialData:
+    """
+    Serial Data
+    """
     def __init__(
             self,
             port=None,
             rate=38400,
             timeout=9
         ):
-
         self.port = port
         self.rate = rate
         self.timeout = timeout
 
-# Store the whitelist data from xml file
 class WhitelistData:
+    """
+    Store the whitelist data from xml file
+    """
     def __init__(
             self,
             data=""
         ):
-
         self.data = data
 
 # ----------------------------------------------------------------------------
@@ -203,35 +221,40 @@ def shutdown():
     Shutdown function
     """
     # clean up PID file after us
-    log_me('debug', "Shutdown")
+    log_me("debug", "Shutdown")
 
-    if cmdarg.createpid:
-        log_me('debug', "Removing PID file " + str(cmdarg.pidfile))
-        os.remove(cmdarg.pidfile)
+    if CMDARG.createpid:
+        log_me("debug", "Removing PID file " + str(CMDARG.pidfile))
+        os.remove(CMDARG.pidfile)
 
-    if serial_param.port is not None:
-        log_me('debug', "Close serial port")
-        serial_param.port.close()
-        serial_param.port = None
+    if SERIAL_PARAM.port is not None:
+        log_me("debug", "Close serial port")
+        SERIAL_PARAM.port.close()
+        SERIAL_PARAM.port = None
 
-    log_me('debug', "Exit 0")
+    log_me("debug", "Exit 0")
     sys.stdout.flush()
+    # pylint: disable=protected-access
     os._exit(0)
 
+# pylint: disable=unused-argument
 def handler(signum=None, frame=None):
     """
     Handler, signum & frame are used
     """
     if not isinstance(signum, type(None)):
-        log_me('debug', "Signal %i caught, exiting..." % int(signum))
+        log_me("debug", "Signal %i caught, exiting..." % int(signum))
         shutdown()
 
 def daemonize():
+    """
+    Daemonize
+    """
     try:
         pid = os.fork()
         if pid != 0:
             exit(0)
-    except OSError, err:
+    except OSError as err:
         raise RuntimeError("1st fork failed: %s [%d]" % (err.strerror, err.errno))
 
     os.setsid()
@@ -243,16 +266,15 @@ def daemonize():
         pid = os.fork()
         if pid != 0:
             exit(0)
-    except OSError, err:
+    except OSError as err:
         raise RuntimeError("2nd fork failed: %s [%d]" % (err.strerror, err.errno))
 
-    dev_null = file('/dev/null', 'r')
-    os.dup2(dev_null.fileno(), sys.stdin.fileno())
-
-    if cmdarg.createpid:
+    if CMDARG.createpid:
         pid = str(os.getpid())
-        log_me('debug', "Writing PID " + pid + " to " + str(cmdarg.pidfile))
-        file(cmdarg.pidfile, 'w').write("%s\n" % pid)
+        log_me("debug", "Writing PID " + pid + " to " + str(CMDARG.pidfile))
+        pid_file = open(CMDARG.pidfile, "w")
+        pid_file.write("%s\n" % pid)
+        pid_file.close()
 
 # ----------------------------------------------------------------------------
 # C __LINE__ equivalent in Python by Elf Sternberg
@@ -270,14 +292,12 @@ def readbytes(number):
     Read x amount of bytes from serial port.
     Credit: Boris Smus http://smus.com
     """
-    buf = ''
+    buf = bytes()
     for _ in range(number):
         try:
-            byte = serial_param.port.read()
-        except IOError, err:
-            log_me('error', err)
-        except OSError, err:
-            log_me('error', err)
+            byte = SERIAL_PARAM.port.read()
+        except (IOError, OSError) as err:
+            log_me("error", err)
         buf += byte
 
     return buf
@@ -293,234 +313,233 @@ def decode_packet(message):
     decoded = False
 
     # Verify incoming message
-    log_me('debug', "Verify incoming packet")
+    log_me("debug", "Verify incoming packet")
     if not test_rfx(ByteToHex(message)):
-        log_me('error', "The incoming message is invalid (" +
+        log_me("error", "The incoming message is invalid (" +
                ByteToHex(message) + ") Line: " + _line())
         return
-    else:
-        log_me('debug', "Verified OK")
+    log_me("debug", "Verified OK")
 
     raw_message = ByteToHex(message)
     raw_message = raw_message.replace(' ', '')
 
     packettype = ByteToHex(message[1])
-    log_me('debug', "PacketType: %s" % str(packettype))
+    log_me("debug", "PacketType: %s" % str(packettype))
 
     if len(message) > 2:
         subtype = ByteToHex(message[2])
-        log_me('debug', "SubType: %s" % str(subtype))
+        log_me("debug", "SubType: %s" % str(subtype))
 
     if len(message) > 3:
         seqnbr = ByteToHex(message[3])
-        log_me('debug', "SeqNbr: %s" % str(seqnbr))
+        log_me("debug", "SeqNbr: %s" % str(seqnbr))
 
     if len(message) > 4:
         id1 = ByteToHex(message[4])
-        log_me('debug', "Id1: %s" % str(id1))
+        log_me("debug", "Id1: %s" % str(id1))
 
     if len(message) > 5:
         id2 = ByteToHex(message[5])
-        log_me('debug', "Id2: %s" % str(id2))
+        log_me("debug", "Id2: %s" % str(id2))
 
-    log_me('info', "Packettype\t\t\t= " + rfx.rfx_packettype[packettype])
+    log_me("info", "Packettype\t\t\t= " + RFX.rfx_packettype[packettype])
 
     # ---------------------------------------
     # Verify correct length on packets
     # ---------------------------------------
-    log_me('debug', "Verify correct packet length")
+    log_me("debug", "Verify correct packet length")
     if packettype == '00' and len(message) != 14:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '01' and len(message) != 14 and len(message) != 21:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '02' and len(message) != 5:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '10' and len(message) != 8:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '11' and len(message) != 12:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '12' and len(message) != 9:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '13' and len(message) != 10:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '14' and len(message) != 11:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '15' and len(message) != 12:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '16' and len(message) != 8:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '17' and len(message) != 8:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '18' and len(message) != 8:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '19' and len(message) != 10:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '1A' and len(message) != 13:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '20' and len(message) != 9:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '28' and len(message) != 7:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '30' and len(message) != 8:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '40' and len(message) != 10:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '41' and len(message) != 7:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '42' and len(message) != 9:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '4E' and len(message) != 11:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '4F' and len(message) != 11:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '50' and len(message) != 9:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '51' and len(message) != 9:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '52' and len(message) != 11:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '53' and len(message) != 10:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '54' and len(message) != 14:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '55' and len(message) != 12:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '56' and len(message) != 17:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '57' and len(message) != 10:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '58' and len(message) != 14:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '59' and len(message) != 14:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '5A' and len(message) != 18:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '5B' and len(message) != 20:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '5C' and len(message) != 16:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '5D' and len(message) != 9:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '70' and len(message) != 8:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '71' and len(message) != 11:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
     if packettype == '72' and len(message) != 10:
-        log_me('error', "Packet has wrong length, discarding")
+        log_me("error", "Packet has wrong length, discarding")
         decoded = True
         packettype = None
 
@@ -529,24 +548,24 @@ def decode_packet(message):
     # then save the packet to log_msgfile designated
     # file on disk
     # ---------------------------------------
-    if not decoded and config.log_msg:
-        log_me('debug', "Save packet to log_msgfile")
+    if not decoded and CONFIG.log_msg:
+        log_me("debug", "Save packet to log_msgfile")
         try:
             data = str(ByteToHex(message))
             data = data.replace(' ', '')
-            config_file = open(config.log_msgfile, "a+")
+            config_file = open(CONFIG.log_msgfile, "a+")
             config_file.write(data + "\n")
             config_file.close()
-        except Exception, err:
-            log_me('error', "Error when trying to write message log")
-            log_me('error', err)
+        except Exception as err:
+            log_me("error", "Error when trying to write message log")
+            log_me("error", err)
 
     metadata = list()
     output_extra = list()
 
     # 0x0 - Interface Control
     if packettype == '00':
-        log_me('debug', "Decode packetType 0x" + str(packettype) + " - Start")
+        log_me("debug", "Decode packetType 0x" + str(packettype) + " - Start")
         decoded = True
 
     # 0x01 - Interface Message
@@ -673,7 +692,7 @@ def decode_packet(message):
     if packettype == '54':
         decoded = True
         metadata, output_extra = rfxdecode0x5.decode_0x54(message, subtype, seqnbr, id1, id2, \
-            config.barometric)
+            CONFIG.barometric)
 
     # 0x55 Rain sensors
     if packettype == '55':
@@ -747,12 +766,12 @@ def decode_packet(message):
 
     # Not decoded message
 
-    # The packet is not decoded, then log_me('info', it on the screen)
+    # The packet is not decoded, then log_me("info", it on the screen)
     if not decoded:
-        log_me('error', "Message not decoded. Line: " + _line())
-        log_me('error', "Message: " + ByteToHex(message))
-        log_me('info', timestamp + " " + ByteToHex(message))
-        log_me('info', "RFXCMD cannot decode message, see http://code.google.com/p/rfxcmd/wiki/")
+        log_me("error", "Message not decoded. Line: " + _line())
+        log_me("error", "Message: " + ByteToHex(message))
+        log_me("info", timestamp + " " + ByteToHex(message))
+        log_me("info", "RFXCMD cannot decode message, see http://code.google.com/p/rfxcmd/wiki/")
 
     # Print result
     print_decoded(metadata)
@@ -771,38 +790,38 @@ def read_socket():
     """
 
     if not MESSAGEQUEUE.empty():
-        log_me('debug', "Message received in socket MESSAGEQUEUE")
-        message = stripped(MESSAGEQUEUE.get())
+        log_me("debug", "Message received in socket MESSAGEQUEUE")
+        message = MESSAGEQUEUE.get().decode("UTF-8")
 
         if test_rfx(message):
 
-            if config.serial_active:
+            if CONFIG.serial_active:
                 # Flush buffer
-                serial_param.port.flushOutput()
-                log_me('debug', "SerialPort flush output")
-                serial_param.port.flushInput()
-                log_me('debug', "SerialPort flush input")
+                SERIAL_PARAM.port.flushOutput()
+                log_me("debug", "SerialPort flush output")
+                SERIAL_PARAM.port.flushInput()
+                log_me("debug", "SerialPort flush input")
 
             timestamp = strftime('%Y-%m-%d %H:%M:%S')
 
-            log_me('info', "------------------------------------------------")
-            log_me('info', "Incoming message from socket")
-            log_me('info', "Send\t\t\t= " + ByteToHex(message.decode('hex')))
-            log_me('info', "Date/Time\t\t\t= " + timestamp)
-            log_me('info', "Packet Length\t\t= " + ByteToHex(message.decode('hex')[0]))
+            log_me("info", "------------------------------------------------")
+            log_me("info", "Incoming message from socket")
+            log_me("info", "Send\t\t\t= " + ByteToHex(codecs_decode(message, "hex")))
+            log_me("info", "Date/Time\t\t\t= " + timestamp)
+            log_me("info", "Packet Length\t\t= " + ByteToHex(codecs_decode(message, "hex")[0]))
 
             try:
-                log_me('debug', "Decode message")
-                decode_packet(message.decode('hex'))
+                log_me("debug", "Decode message")
+                decode_packet(codecs_decode(message, "hex"))
             except KeyError:
-                log_me('error', "Unrecognizable packet. Line: " + _line())
+                log_me("error", "Unrecognizable packet. Line: " + _line())
 
-            if config.serial_active:
-                log_me('debug', "Write message to serial port")
-                serial_param.port.write(message.decode('hex'))
+            if CONFIG.serial_active:
+                log_me("debug", "Write message to serial port")
+                SERIAL_PARAM.port.write(codecs_decode(message, "hex"))
 
         else:
-            log_me('error', "Invalid message from socket. Line: " + _line())
+            log_me("error", "Invalid message from socket. Line: " + _line())
 
 # ----------------------------------------------------------------------------
 
@@ -812,50 +831,44 @@ def test_rfx(message):
     Return true if valid, False if not
     """
 
-    log_me('debug', "Test message: " + message)
+    log_me("debug", "Test message: " + message)
 
     # Remove all invalid characters
     message = stripped(message)
+
+    return_statement = True
 
     # Remove any whitespaces
     try:
         message = message.replace(' ', '')
     except Exception:
-        log_me('error', "Removing white spaces")
+        log_me("error", "Removing white spaces")
         return False
 
     # Test the string if it is hex format
-    try:
-        int(message, 16)
-    except TypeError, err:
-        log_me('error', "Packet not hex format")
-        log_me('error', err)
-        return False
-
+    if message == '':
+        log_me("error", "Packet empty")
+        return_statement = False
     # Check that length is even
-    if len(message) % 2:
-        log_me('error', "Packet length not even")
-        return False
-
+    elif len(message) % 2:
+        log_me("error", "Packet length not even")
+        return_statement = False
     # Check that first byte is not 00
-    if ByteToHex(message.decode('hex')[0]) == "00":
-        log_me('error', "Packet first byte is 00")
-        return False
-
+    elif ByteToHex(codecs_decode(message, "hex")[0]) == "00":
+        log_me("error", "Packet first byte is 00")
+        return_statement = False
     # Length more than one byte
-    if not len(message.decode('hex')) > 1:
-        log_me('error', "Packet is not longer than one byte")
-        return False
-
+    elif not len(codecs_decode(message, "hex")) > 1:
+        log_me("error", "Packet is not longer than one byte")
+        return_statement = False
     # Check if string is the length that it reports to be
-    cmd_len = int(ByteToHex(message.decode('hex')[0]), 16)
-    if not len(message.decode('hex')) == (cmd_len + 1):
-        log_me('error', "Packet length is not valid")
-        return False
+    elif not len(codecs_decode(message, "hex")) == (codecs_decode(message, "hex")[0] + 1):
+        log_me("error", "Packet length is not valid")
+        return_statement = False
+    else:
+        log_me("debug", "Message OK")
 
-    log_me('debug', "Message OK")
-
-    return True
+    return return_statement
 
 # ----------------------------------------------------------------------------
 
@@ -865,17 +878,17 @@ def send_rfx(message):
     """
     timestamp = strftime("%Y-%m-%d %H:%M:%S")
 
-    log_me('info', "------------------------------------------------")
-    log_me('info', "Send\t\t\t= " + ByteToHex(message))
-    log_me('info', "Date/Time\t\t\t= " + timestamp)
-    log_me('info', "Packet Length\t\t= " + ByteToHex(message[0]))
+    log_me("info", "------------------------------------------------")
+    log_me("info", "Send\t\t\t= " + ByteToHex(message))
+    log_me("info", "Date/Time\t\t\t= " + timestamp)
+    log_me("info", "Packet Length\t\t= " + ByteToHex(message[0]))
 
     try:
         decode_packet(message)
-    except KeyError, err:
-        log_me('error', "unrecognizable packet %s" % err)
+    except KeyError as err:
+        log_me("error", "unrecognizable packet %s" % err)
 
-    serial_param.port.write(message)
+    SERIAL_PARAM.port.write(message)
     sleep(1)
 
 # ----------------------------------------------------------------------------
@@ -888,120 +901,118 @@ def read_rfx():
     byte = None
 
     try:
-
         try:
-            if serial_param.port.inWaiting() != 0:
+            if SERIAL_PARAM.port.inWaiting() != 0:
                 timestamp = strftime("%Y-%m-%d %H:%M:%S")
-                log_me('debug', "Timestamp: " + timestamp)
-                log_me('debug', "SerWaiting: " + str(serial_param.port.inWaiting()))
-                byte = serial_param.port.read()
-                log_me('debug', "Byte: " + str(ByteToHex(byte)))
-        except IOError, err:
-            log_me('error', err)
-            log_me('error', "Serial read %s, Line: %s" % (str(err), _line()))
+                log_me("debug", "Timestamp: " + timestamp)
+                log_me("debug", "SerWaiting: " + str(SERIAL_PARAM.port.inWaiting()))
+                byte = SERIAL_PARAM.port.read()
+                log_me("debug", "Byte: " + str(ByteToHex(byte)))
+        except IOError as err:
+            log_me("error", err)
+            log_me("error", "Serial read %s, Line: %s" % (str(err), _line()))
 
         if byte:
             message = byte + readbytes(ord(byte))
-            log_me('debug', "Message: " + str(ByteToHex(message)))
+            log_me("debug", "Message: " + str(ByteToHex(message)))
 
             # First byte indicate length of message, must be other than 00
             if ByteToHex(message[0]) != "00":
 
                 # Verify length
-                log_me('debug', "Verify length")
-                if (len(message) - 1) == ord(message[0]):
-
-                    log_me('debug', "Length OK")
+                log_me("debug", "Verify length")
+                if (len(message) - 1) == message[0]:
+                    log_me("debug", "Length OK")
 
                     # Whitelist
-                    if config.whitelist_active:
-                        log_me('debug', "Check whitelist")
+                    if CONFIG.whitelist_active:
+                        log_me("debug", "Check whitelist")
                         whitelist_match = False
-                        for sensor in whitelist.data:
+                        for sensor in WHITELIST.data:
                             sensor = sensor.childNodes[0].nodeValue
-                            log_me('debug', "Tag: " + sensor)
+                            log_me("debug", "Tag: " + sensor)
                             rawcmd = ByteToHex(message)
                             rawcmd = rawcmd.replace(' ', '')
                             if match(sensor, rawcmd):
-                                log_me('debug', "Whitelist match")
+                                log_me("debug", "Whitelist match")
                                 whitelist_match = True
 
                         if not whitelist_match:
-                            log_me('info', "Sensor not included in whitelist")
+                            log_me("info", "Sensor not included in whitelist")
                             return rawcmd
 
-                    log_me('info', "------------------------------------------------")
-                    log_me('info', "Received\t\t\t= " + ByteToHex(message))
-                    log_me('info', "Date/Time\t\t\t= " + timestamp)
-                    log_me('info', "Packet Length\t\t= " + ByteToHex(message[0]))
+                    log_me("info", "------------------------------------------------")
+                    log_me("info", "Received\t\t\t= " + ByteToHex(message))
+                    log_me("info", "Date/Time\t\t\t= " + timestamp)
+                    log_me("info", "Packet Length\t\t= " + ByteToHex(message[0]))
 
-                    log_me('debug', 'Decode packet')
+                    log_me("debug", 'Decode packet')
                     try:
                         decode_packet(message)
-                    except KeyError, err:
-                        log_me('error', "unrecognizable packet (" + ByteToHex(message) + \
+                    except KeyError as err:
+                        log_me("error", "unrecognizable packet (" + ByteToHex(message) + \
                                ") Line: " + _line())
-                        log_me('error', err)
+                        log_me("error", err)
                     rawcmd = ByteToHex(message)
                     rawcmd = rawcmd.replace(' ', '')
 
                     return rawcmd
 
-                else:
-                    log_me('error', "Incoming packet not valid length. Line: "  + _line())
-                    log_me('error', "------------------------------------------------")
-                    log_me('error', "Received\t\t\t= " + ByteToHex(message))
-                    log_me('error', "Incoming packet not valid, waiting for next...")
+                log_me("error", "Incoming packet not valid length. Line: "  + _line())
+                log_me("error", "------------------------------------------------")
+                log_me("error", "Received\t\t\t= " + ByteToHex(message))
+                log_me("error", "Incoming packet not valid, waiting for next...")
 
     except OSError:
-        log_me('error', "Error in message: " + str(ByteToHex(message)) + " Line: " + _line())
-        log_me('error', "Traceback: " + format_exc())
-        log_me('error', "------------------------------------------------")
-        log_me('error', "Received\t\t\t= " + ByteToHex(message))
+        log_me("error", "Error in message: " + str(ByteToHex(message)) + " Line: " + _line())
+        log_me("error", "Traceback: " + format_exc())
+        log_me("error", "------------------------------------------------")
+        log_me("error", "Received\t\t\t= " + ByteToHex(message))
         format_exc()
+    return None
 
 # ----------------------------------------------------------------------------
 
-def read_config(configFile, configItem):
+def read_config(configfile, configitem):
     """
     Read item from the configuration file
     """
-    log_me('debug', 'Open configuration file')
-    log_me('debug', 'File: ' + configFile)
+    log_me("debug", 'Open configuration file')
+    log_me("debug", 'File: ' + configfile)
 
-    if os.path.exists(configFile):
+    if os.path.exists(configfile):
 
         #open the xml file for reading:
-        config_file = open(configFile, 'r')
+        config_file = open(configfile, 'r')
         data = config_file.read()
         config_file.close()
 
         # xml parse file data
-        log_me('debug', 'Parse config XML data')
+        log_me("debug", 'Parse config XML data')
         try:
             dom = minidom.parseString(data)
-        except Exception, err:
-            log_me('error', "problem in the config.xml file, cannot process it")
-            log_me('error', err)
+        except Exception as err:
+            log_me("error", "problem in the config.xml file, cannot process it")
+            log_me("error", err)
 
         # Get config item
-        log_me('debug', 'Get the configuration item: ' + configItem)
+        log_me("debug", 'Get the configuration item: ' + configitem)
 
         try:
-            xml_tag = dom.getElementsByTagName(configItem)[0].toxml()
-            log_me('debug', 'Found: ' + xml_tag)
-            xml_data = xml_tag.replace('<' + configItem + '>', '').\
-                replace('</' + configItem + '>', '')
-            log_me('debug', '--> ' + xml_data)
-        except Exception, err:
-            log_me('error', 'The item tag not found in the config file')
-            log_me('error', err)
+            xml_tag = dom.getElementsByTagName(configitem)[0].toxml()
+            log_me("debug", "Found: " + xml_tag)
+            xml_data = xml_tag.replace("<" + configitem + ">", "").\
+                replace("</" + configitem + ">", "")
+            log_me("debug", "--> " + xml_data)
+        except Exception as err:
+            log_me("error", "The item tag not found in the config file")
+            log_me("error", err)
             xml_data = ""
 
-        log_me('debug', 'Return')
+        log_me("debug", "Return")
 
     else:
-        log_me('error', "Config file does not exists. Line: " + _line())
+        log_me("error", "Config file does not exists. Line: " + _line())
 
     return xml_data
 
@@ -1012,16 +1023,16 @@ def read_whitelistfile():
     Read whitelist file to list
     """
     try:
-        xmldoc = minidom.parse(config.whitelist_file)
-    except Exception, err:
-        log_me('error', "Error in " + config.whitelist_file + " file")
-        log_me('error', err)
+        xmldoc = minidom.parse(CONFIG.whitelist_file)
+    except Exception as err:
+        log_me("error", "Error in " + CONFIG.whitelist_file + " file")
+        log_me("error", err)
         exit(1)
 
-    whitelist.data = xmldoc.documentElement.getElementsByTagName('sensor')
+    WHITELIST.data = xmldoc.documentElement.getElementsByTagName('sensor')
 
-    for sensor in whitelist.data:
-        log_me('debug', "Tags: " + sensor.childNodes[0].nodeValue)
+    for sensor in WHITELIST.data:
+        log_me("debug", "Tags: " + sensor.childNodes[0].nodeValue)
 
 # ----------------------------------------------------------------------------
 
@@ -1029,10 +1040,10 @@ def print_version():
     """
     Print RFXCMD version, build and date
     """
-    log_me('debug', "print_version")
-    log_me('info', "RFXCMD Version: " + __version__)
-    log_me('info', __date__.replace('$', ''))
-    log_me('debug', "Exit 0")
+    log_me("debug", "print_version")
+    log_me("info", "RFXCMD Version: " + __version__)
+    log_me("info", __date__.replace('$', ''))
+    log_me("debug", "Exit 0")
     exit(0)
 
 # ----------------------------------------------------------------------------
@@ -1042,7 +1053,7 @@ def check_pythonversion():
     Check python version
     """
     if sys.hexversion < 0x02060000:
-        log_me('error', "Your Python need to be 2.6 or newer, please upgrade.")
+        log_me("error", "Your Python need to be 2.6 or newer, please upgrade.")
         exit(1)
 
 # ----------------------------------------------------------------------------
@@ -1058,53 +1069,53 @@ def option_simulate(indata):
 
     # Cut into hex chunks
     try:
-        message = indata.decode("hex")
-    except TypeError, err:
-        log_me('error', "the input data is not valid. Line: " + _line())
-        log_me('error', err)
+        message = codecs_decode(indata, "hex")
+    except TypeError as err:
+        log_me("error", "the input data is not valid. Line: " + _line())
+        log_me("error", err)
         exit(1)
 
     timestamp = strftime('%Y-%m-%d %H:%M:%S')
 
     # Whitelist
-    if config.whitelist_active:
-        log_me('debug', "Check whitelist")
+    if CONFIG.whitelist_active:
+        log_me("debug", "Check whitelist")
         whitelist_match = False
-        for sensor in whitelist.data:
+        for sensor in WHITELIST.data:
             sensor = sensor.getElementsByTagName('sensor')[0].childNodes[0].nodeValue
-            log_me('debug', "Sensor: " + sensor)
+            log_me("debug", "Sensor: " + sensor)
             rawcmd = ByteToHex(message)
             rawcmd = rawcmd.replace(' ', '')
             if match(sensor, rawcmd):
                 whitelist_match = True
 
         if not whitelist_match:
-            log_me('info', "Sensor not included in whitelist")
-            log_me('debug', "No match in whitelist")
-            log_me('debug', "Exit 0")
+            log_me("info", "Sensor not included in whitelist")
+            log_me("debug", "No match in whitelist")
+            log_me("debug", "Exit 0")
             exit(0)
 
     # Printout
-    log_me('info', "------------------------------------------------")
-    log_me('info', "Received\t\t\t= " + indata)
-    log_me('info', "Date/Time\t\t\t= " + timestamp)
+    log_me("info", "------------------------------------------------")
+    log_me("info", "Received\t\t\t= " + indata)
+    log_me("info", "Date/Time\t\t\t= " + timestamp)
 
     # Verify that the incoming value is hex
     try:
         int(indata, 16)
-    except ValueError, err:
-        log_me('error', "the input data is invalid hex value. Line: " + _line())
-        log_me('error', err)
+    except ValueError as err:
+        log_me("error", "the input data is invalid hex value. Line: " + _line())
+        log_me("error", err)
         exit(1)
 
     # Decode it
     try:
         decode_packet(message)
     except KeyError:
-        log_me('error', "unrecognizable packet (" + ByteToHex(message) + ") Line: " + _line())
+        log_me("error", "unrecognizable packet (" + ByteToHex(message) + ") Line: " + _line())
         exit(1)
 
-    log_me('debug', 'Exit 0')
+    log_me("debug", 'Exit 0')
     exit(0)
 
 # ----------------------------------------------------------------------------
@@ -1113,61 +1124,61 @@ def option_listen():
     """
     Listen to RFXtrx device and process data, exit with CTRL+C
     """
-    log_me('debug', "Start listening...")
+    log_me("debug", "Start listening...")
 
-    if config.serial_active:
-        log_me('debug', "Open serial port")
+    if CONFIG.serial_active:
+        log_me("debug", "Open serial port")
         open_serialport()
 
-    if config.socketserver:
+    if CONFIG.socketserver:
         try:
-            serversocket = RFXcmdSocketAdapter(config.sockethost, int(config.socketport))
-        except Exception, err:
-            log_me('error', "Error starting socket server. Line: " + _line())
-            log_me('error', "can not start server socket, another instance already running?")
-            log_me('error', err)
+            serversocket = RFXcmdSocketAdapter(CONFIG.sockethost, int(CONFIG.socketport))
+        except Exception as err:
+            log_me("error", "Error starting socket server. Line: " + _line())
+            log_me("error", "can not start server socket, another instance already running?")
+            log_me("error", err)
             exit(1)
         if serversocket.net_adapter_registered:
-            log_me('debug', "Socket interface started")
+            log_me("debug", "Socket interface started")
         else:
-            log_me('warning', "Cannot start socket interface")
+            log_me("warning", "Cannot start socket interface")
 
-    if config.serial_active:
+    if CONFIG.serial_active:
         # Flush buffer
-        log_me('debug', "Serialport flush output")
-        serial_param.port.flushOutput()
-        log_me('debug', "Serialport flush input")
-        serial_param.port.flushInput()
+        log_me("debug", "Serialport flush output")
+        SERIAL_PARAM.port.flushOutput()
+        log_me("debug", "Serialport flush input")
+        SERIAL_PARAM.port.flushInput()
 
         # Send RESET
-        log_me('debug', "Send rfxcmd_reset (" + rfxcmd.reset + ")")
-        serial_param.port.write(rfxcmd.reset.decode('hex'))
-        log_me('debug', "Sleep 1 sec")
+        log_me("debug", "Send rfxcmd_reset (" + RFXCMD.reset + ")")
+        SERIAL_PARAM.port.write(codecs_decode(RFXCMD.reset, "hex"))
+        log_me("debug", "Sleep 1 sec")
         sleep(1)
 
         # Flush buffer
-        log_me('debug', "Serialport flush output")
-        serial_param.port.flushOutput()
-        log_me('debug', "Serialport flush input")
-        serial_param.port.flushInput()
+        log_me("debug", "Serialport flush output")
+        SERIAL_PARAM.port.flushOutput()
+        log_me("debug", "Serialport flush input")
+        SERIAL_PARAM.port.flushInput()
 
         # Send STATUS
-        log_me('debug', "Send rfxcmd_status (" + rfxcmd.status + ")")
-        serial_param.port.write(rfxcmd.status.decode('hex'))
-        log_me('debug', "Sleep 1 sec")
+        log_me("debug", "Send rfxcmd_status (" + RFXCMD.status + ")")
+        SERIAL_PARAM.port.write(codecs_decode(RFXCMD.status, "hex"))
+        log_me("debug", "Sleep 1 sec")
         sleep(1)
 
         # If active (autostart)
-        if config.protocol_startup:
-            log_me('debug', "Protocol AutoStart activated")
+        if CONFIG.protocol_startup:
+            log_me("debug", "Protocol AutoStart activated")
             try:
-                p_message = protocol.set_protocolfile(config.protocol_file)
-                log_me('debug', "Send set protocol message (" + p_message + ")")
-                serial_param.port.write(p_message.decode('hex'))
-                log_me('debug', "Sleep 1 sec")
+                p_message = protocol.set_protocolfile(CONFIG.protocol_file)
+                log_me("debug", "Send set protocol message (" + p_message + ")")
+                SERIAL_PARAM.port.write(codecs_decode(p_message, "hex"))
+                log_me("debug", "Sleep 1 sec")
                 sleep(1)
             except Exception as err:
-                log_me('error', "Could not create protocol message")
+                log_me("error", "Could not create protocol message")
 
     try:
         while 1:
@@ -1175,49 +1186,49 @@ def option_listen():
             # Without this sleep it will cause 100% CPU in windows
             sleep(0.01)
 
-            if config.serial_active:
+            if CONFIG.serial_active:
                 # Read serial port
-                if config.process_rfxmsg:
+                if CONFIG.process_rfxmsg:
                     rawcmd = read_rfx()
                     if rawcmd:
-                        log_me('debug', "Processed: " + str(rawcmd))
+                        log_me("debug", "Processed: " + str(rawcmd))
 
             # Read socket
-            if config.socketserver:
+            if CONFIG.socketserver:
                 read_socket()
 
     except KeyboardInterrupt:
-        log_me('debug', "Received keyboard interrupt")
-        log_me('debug', "Close server socket")
+        log_me("debug", "Received keyboard interrupt")
+        log_me("debug", "Close server socket")
         serversocket.net_adapter.shutdown()
 
-        if config.serial_active:
-            log_me('debug', "Close serial port")
+        if CONFIG.serial_active:
+            log_me("debug", "Close serial port")
             close_serialport()
 
-        log_me('info', "\nExit...")
+        log_me("info", "\nExit...")
 
 # ----------------------------------------------------------------------------
 
 def option_getstatus():
     """
-    Get status from RFXtrx device and log_me('info', on screen)
+    Get status from RFXtrx device and log_me("info", on screen)
     """
 
     # Flush buffer
-    serial_param.port.flushOutput()
-    serial_param.port.flushInput()
+    SERIAL_PARAM.port.flushOutput()
+    SERIAL_PARAM.port.flushInput()
 
     # Send RESET
-    serial_param.port.write(rfxcmd.reset.decode('hex'))
+    SERIAL_PARAM.port.write(codecs_decode(RFXCMD.reset, "hex"))
     sleep(1)
 
     # Flush buffer
-    serial_param.port.flushOutput()
-    serial_param.port.flushInput()
+    SERIAL_PARAM.port.flushOutput()
+    SERIAL_PARAM.port.flushInput()
 
     # Send STATUS
-    send_rfx(rfxcmd.status.decode('hex'))
+    send_rfx(codecs_decode(RFXCMD.status, "hex"))
     sleep(1)
     read_rfx()
 
@@ -1229,69 +1240,69 @@ def option_send():
 
     """
 
-    log_me('debug', "Send message to RFX device")
+    log_me("debug", "Send message to RFX device")
 
     # Open serial port
-    log_me('debug', "Open serial port")
+    log_me("debug", "Open serial port")
     open_serialport()
 
     # Remove any whitespaces
-    cmdarg.rawcmd = cmdarg.rawcmd.replace(' ', '')
-    log_me('debug', "Message: " + cmdarg.rawcmd)
+    CMDARG.rawcmd = CMDARG.rawcmd.replace(' ', '')
+    log_me("debug", "Message: " + CMDARG.rawcmd)
 
     # Test the string if it is hex format
     try:
-        int(cmdarg.rawcmd, 16)
+        int(CMDARG.rawcmd, 16)
     except ValueError:
-        log_me('error', "invalid rawcmd, not hex format")
+        log_me("error", "invalid rawcmd, not hex format")
         exit(1)
 
     # Check that first byte is not 00
-    if ByteToHex(cmdarg.rawcmd.decode('hex')[0]) == "00":
-        log_me('error', "invalid rawcmd, first byte is zero")
+    if ByteToHex(codecs_decode(CMDARG.rawcmd, "hex")[0]) == "00":
+        log_me("error", "invalid rawcmd, first byte is zero")
         exit(1)
 
     # Check if string is the length that it reports to be
-    cmd_len = int(ByteToHex(cmdarg.rawcmd.decode('hex')[0]), 16)
-    if not len(cmdarg.rawcmd.decode('hex')) == (cmd_len + 1):
-        log_me('error', "invalid rawcmd, invalid length")
+    cmd_len = int(ByteToHex(codecs_decode(CMDARG.rawcmd, "hex")[0]), 16)
+    if not len(codecs_decode(CMDARG.rawcmd, "hex")) == (cmd_len + 1):
+        log_me("error", "invalid rawcmd, invalid length")
         exit(1)
 
     # Flush buffer
-    log_me('debug', "Serialport flush output")
-    serial_param.port.flushOutput()
-    log_me('debug', "Serialport flush input")
-    serial_param.port.flushInput()
+    log_me("debug", "Serialport flush output")
+    SERIAL_PARAM.port.flushOutput()
+    log_me("debug", "Serialport flush input")
+    SERIAL_PARAM.port.flushInput()
 
     # Send RESET
-    log_me('debug', "Send RFX reset")
-    serial_param.port.write(rfxcmd.reset.decode('hex'))
+    log_me("debug", "Send RFX reset")
+    SERIAL_PARAM.port.write(codecs_decode(RFXCMD.reset, "hex"))
     sleep(1)
 
     # Flush buffer
-    log_me('debug', "Serialport flush output")
-    serial_param.port.flushOutput()
-    log_me('debug', "Serialport flush input")
-    serial_param.port.flushInput()
+    log_me("debug", "Serialport flush output")
+    SERIAL_PARAM.port.flushOutput()
+    log_me("debug", "Serialport flush input")
+    SERIAL_PARAM.port.flushInput()
 
-    if cmdarg.rawcmd:
+    if CMDARG.rawcmd:
         timestamp = strftime('%Y-%m-%d %H:%M:%S')
-        log_me('info', "------------------------------------------------")
-        log_me('info', "Send\t\t\t= " + ByteToHex(cmdarg.rawcmd.decode('hex')))
-        log_me('info', "Date/Time\t\t\t= " + timestamp)
-        log_me('info', "Packet Length\t\t= " + ByteToHex(cmdarg.rawcmd.decode('hex')[0]))
+        log_me("info", "------------------------------------------------")
+        log_me("info", "Send\t\t\t= " + ByteToHex(codecs_decode(CMDARG.rawcmd, "hex")))
+        log_me("info", "Date/Time\t\t\t= " + timestamp)
+        log_me("info", "Packet Length\t\t= " + ByteToHex(codecs_decode(CMDARG.rawcmd, "hex")[0]))
         try:
-            decode_packet(cmdarg.rawcmd.decode('hex'))
+            decode_packet(codecs_decode(CMDARG.rawcmd, "hex"))
         except KeyError:
-            log_me('error', "unrecognizable packet")
+            log_me("error", "unrecognizable packet")
 
-        log_me('debug', "Send message")
-        serial_param.port.write(cmdarg.rawcmd.decode('hex'))
+        log_me("debug", "Send message")
+        SERIAL_PARAM.port.write(codecs_decode(CMDARG.rawcmd, "hex"))
         sleep(1)
-        log_me('debug', "Read response")
+        log_me("debug", "Read response")
         read_rfx()
 
-    log_me('debug', "Close serial port")
+    log_me("debug", "Close serial port")
     close_serialport()
 
 # ----------------------------------------------------------------------------
@@ -1300,64 +1311,64 @@ def read_configfile():
     """
     Read items from the configuration file
     """
-    if os.path.exists(cmdarg.configfile):
+    if os.path.exists(CMDARG.configfile):
 
         # ----------------------
         # Serial device
-        config.serial_active = bool(read_config(cmdarg.configfile, "serial_active") == "yes")
-        config.serial_device = read_config(cmdarg.configfile, "serial_device")
-        config.serial_rate = read_config(cmdarg.configfile, "serial_rate")
-        config.serial_timeout = read_config(cmdarg.configfile, "serial_timeout")
+        CONFIG.serial_active = bool(read_config(CMDARG.configfile, "serial_active") == "yes")
+        CONFIG.serial_device = read_config(CMDARG.configfile, "serial_device")
+        CONFIG.serial_rate = read_config(CMDARG.configfile, "serial_rate")
+        CONFIG.serial_timeout = read_config(CMDARG.configfile, "serial_timeout")
 
-        log_me('debug', "Serial device: " + str(config.serial_device))
-        log_me('debug', "Serial rate: " + str(config.serial_rate))
-        log_me('debug', "Serial timeout: " + str(config.serial_timeout))
+        log_me("debug", "Serial device: " + str(CONFIG.serial_device))
+        log_me("debug", "Serial rate: " + str(CONFIG.serial_rate))
+        log_me("debug", "Serial timeout: " + str(CONFIG.serial_timeout))
 
         # ----------------------
         # Process
-        config.process_rfxmsg = bool(read_config(cmdarg.configfile, "process_rfxmsg") == "yes")
-        log_me('debug', "Process RFXmsg: " + str(config.process_rfxmsg))
+        CONFIG.process_rfxmsg = bool(read_config(CMDARG.configfile, "process_rfxmsg") == "yes")
+        log_me("debug", "Process RFXmsg: " + str(CONFIG.process_rfxmsg))
 
         # ----------------------
         # SOCKET SERVER
-        config.socketserver = bool(read_config(cmdarg.configfile, "socketserver") == "yes")
-        config.sockethost = read_config(cmdarg.configfile, "sockethost")
-        config.socketport = read_config(cmdarg.configfile, "socketport")
-        log_me('debug', "SocketServer: " + str(config.socketserver))
-        log_me('debug', "SocketHost: " + str(config.sockethost))
-        log_me('debug', "SocketPort: " + str(config.socketport))
+        CONFIG.socketserver = bool(read_config(CMDARG.configfile, "socketserver") == "yes")
+        CONFIG.sockethost = read_config(CMDARG.configfile, "sockethost")
+        CONFIG.socketport = read_config(CMDARG.configfile, "socketport")
+        log_me("debug", "SocketServer: " + str(CONFIG.socketserver))
+        log_me("debug", "SocketHost: " + str(CONFIG.sockethost))
+        log_me("debug", "SocketPort: " + str(CONFIG.socketport))
 
         # -----------------------
         # WHITELIST
-        config.whitelist_active = bool(read_config(cmdarg.configfile, "whitelist_active") == "yes")
-        config.whitelist_file = read_config(cmdarg.configfile, "whitelist_file")
-        log_me('debug', "Whitelist_active: " + str(config.whitelist_active))
-        log_me('debug', "Whitelist_file: " + str(config.whitelist_file))
+        CONFIG.whitelist_active = bool(read_config(CMDARG.configfile, "whitelist_active") == "yes")
+        CONFIG.whitelist_file = read_config(CMDARG.configfile, "whitelist_file")
+        log_me("debug", "Whitelist_active: " + str(CONFIG.whitelist_active))
+        log_me("debug", "Whitelist_file: " + str(CONFIG.whitelist_file))
 
         # -----------------------
         # DAEMON
-        config.daemon_active = bool(read_config(cmdarg.configfile, "daemon_active") == "yes")
-        config.daemon_pidfile = read_config(cmdarg.configfile, "daemon_pidfile")
-        log_me('debug', "Daemon_active: " + str(config.daemon_active))
-        log_me('debug', "Daemon_pidfile: " + str(config.daemon_pidfile))
+        CONFIG.daemon_active = bool(read_config(CMDARG.configfile, "daemon_active") == "yes")
+        CONFIG.daemon_pidfile = read_config(CMDARG.configfile, "daemon_pidfile")
+        log_me("debug", "Daemon_active: " + str(CONFIG.daemon_active))
+        log_me("debug", "Daemon_pidfile: " + str(CONFIG.daemon_pidfile))
 
         # ------------------------
         # BAROMETRIC
-        config.barometric = read_config(cmdarg.configfile, "barometric")
+        CONFIG.barometric = read_config(CMDARG.configfile, "barometric")
 
         # ------------------------
         # LOG MESSAGES
-        config.log_msg = bool(read_config(cmdarg.configfile, "log_msg") == "yes")
-        config.log_msgfile = read_config(cmdarg.configfile, "log_msgfile")
+        CONFIG.log_msg = bool(read_config(CMDARG.configfile, "log_msg") == "yes")
+        CONFIG.log_msgfile = read_config(CMDARG.configfile, "log_msgfile")
 
         # ------------------------
         # PROTOCOLS
-        config.protocol_startup = bool(read_config(cmdarg.configfile, "protocol_startup") == "yes")
-        config.protocol_file = read_config(cmdarg.configfile, "protocol_file")
+        CONFIG.protocol_startup = bool(read_config(CMDARG.configfile, "protocol_startup") == "yes")
+        CONFIG.protocol_file = read_config(CMDARG.configfile, "protocol_file")
 
     else:
         # config file not found, set default values
-        log_me('error', "Configuration file not found (" + cmdarg.configfile + ") Line: " + _line())
+        log_me("error", "Configuration file not found (" + CMDARG.configfile + ") Line: " + _line())
 
 # ----------------------------------------------------------------------------
 
@@ -1368,32 +1379,32 @@ def open_serialport():
 
     # Check that serial module is loaded
     try:
-        log_me('debug', "Serial extension version: " + VERSION)
-    except Exception, err:
-        log_me('error', "You need to install Serial extension for Python")
-        log_me('error', err)
+        log_me("debug", "Serial extension version: " + VERSION)
+    except Exception as err:
+        log_me("error", "You need to install Serial extension for Python")
+        log_me("error", err)
         exit(1)
 
     # Check for serial device
-    if config.device:
-        log_me('debug', "Device: " + config.device)
+    if CONFIG.device:
+        log_me("debug", "Device: " + CONFIG.device)
     else:
-        log_me('error', "Device name missing. Line: " + _line())
+        log_me("error", "Device name missing. Line: " + _line())
         exit(1)
 
     # Open serial port
-    log_me('debug', "Open Serialport")
+    log_me("debug", "Open Serialport")
     try:
-        serial_param.port = Serial(config.device,
-                                   serial_param.rate,
-                                   timeout=serial_param.timeout)
-    except SerialException, err:
-        log_me('error', "Failed to connect on device " + config.device + " Line: " + _line())
-        log_me('error', err)
+        SERIAL_PARAM.port = Serial(CONFIG.device,
+                                   SERIAL_PARAM.rate,
+                                   timeout=SERIAL_PARAM.timeout)
+    except SerialException as err:
+        log_me("error", "Failed to connect on device " + CONFIG.device + " Line: " + _line())
+        log_me("error", err)
         exit(1)
 
-    if not serial_param.port.isOpen():
-        serial_param.port.open()
+    if not SERIAL_PARAM.port.isOpen():
+        SERIAL_PARAM.port.open()
 
 # ----------------------------------------------------------------------------
 
@@ -1402,13 +1413,13 @@ def close_serialport():
     Close serial port.
     """
 
-    log_me('debug', "Close serial port")
+    log_me("debug", "Close serial port")
     try:
-        serial_param.port.close()
-        log_me('debug', "Serial port closed")
-    except SerialException, err:
-        log_me('error', "Failed to close the serial port (" + config.device + ") Line: " + _line())
-        log_me('error', err)
+        SERIAL_PARAM.port.close()
+        log_me("debug", "Serial port closed")
+    except SerialException as err:
+        log_me("error", "Failed to close the serial port (" + CONFIG.device + ") Line: " + _line())
+        log_me("error", err)
         exit(1)
 
 # ----------------------------------------------------------------------------
@@ -1436,16 +1447,15 @@ def logger_init(configfile, name, debug):
     if os.path.exists(os.path.join(program_path, configfile)):
 
         # Read config file
-        config_file = open(os.path.join(program_path, configfile), 'r')
+        config_file = open(os.path.join(program_path, configfile), "r")
         data = config_file.read()
         config_file.close()
 
         try:
             dom = minidom.parseString(data)
-        except Exception, err:
-            log_me('error', "problem in the %s file, cannot process it" % str(configfile))
-            log_me('error', err)
-            return False
+        except Exception:
+            logger = getLogger(name)
+            return logger
 
         if dom:
 
@@ -1456,38 +1466,36 @@ def logger_init(configfile, name, debug):
                 xml_tag = dom.getElementsByTagName('loglevel')[0].toxml()
                 loglevel = xml_tag.replace('<loglevel>', '').replace('</loglevel>', '')
                 loglevel = loglevel.upper()
-            except Exception, err:
+            except Exception:
                 loglevel = "ERROR"
-                log_me('warning', err)
 
             # Get logfile from config file
             try:
                 xml_tag = dom.getElementsByTagName('logfile')[0].toxml()
                 logfile = xml_tag.replace('<logfile>', '').replace('</logfile>', '')
-            except Exception, err:
-                logfile = None
-                log_me('warning', err)
+            except Exception:
+                logger = getLogger(name)
+                return logger
 
             if debug:
                 loglevel = "DEBUG"
-                handler = StreamHandler()
-                handler.setFormatter(formatter)
+                loghandler = StreamHandler()
+                loghandler.setFormatter(formatter)
                 logger = getLogger(name)
                 logger.setLevel(getLevelName(loglevel))
-                logger.addHandler(handler)
+                logger.addHandler(loghandler)
 
             if logfile:
-                handler = FileHandler(logfile)
-                handler.setFormatter(formatter)
+                loghandler = FileHandler(logfile)
+                loghandler.setFormatter(formatter)
                 logger = getLogger(name)
                 logger.setLevel(getLevelName(loglevel))
-                logger.addHandler(handler)
+                logger.addHandler(loghandler)
 
             return logger
 
-    else:
-        log_me('error', "Cannot find configuration file (%s)" % str(configfile))
-        return False
+    logger = getLogger(name)
+    return logger
 
 
 def output_me(timestamp, message, packettype, subtype, seqnbr, metadata_list):
@@ -1496,13 +1504,13 @@ def output_me(timestamp, message, packettype, subtype, seqnbr, metadata_list):
     """
     try:
         output_file = open('/var/log/output.log', 'a+')
-    except Exception, err:
-        log_me('error', err)
+    except Exception as err:
+        log_me("error", err)
         return
     rawcmd = ByteToHex(message)
     rawcmd = rawcmd.replace(' ', '')
 
-    if cmdarg.printout_csv:
+    if CMDARG.printout_csv:
         result = "%s;%s;%s;%s;%s" % (timestamp, rawcmd, packettype, subtype, seqnbr)
         for metadata in metadata_list:
             result += ";%s" % metadata[1]
@@ -1510,7 +1518,7 @@ def output_me(timestamp, message, packettype, subtype, seqnbr, metadata_list):
         result = dict()
         result['timestamp'] = timestamp
         result['rawcmd'] = rawcmd
-        result['packettype'] = rfx.rfx_packettype[packettype]
+        result['packettype'] = RFX.rfx_packettype[packettype]
         result['packettype_id'] = packettype
         result['subtype'] = subtype
         result['seqnbr'] = seqnbr
@@ -1529,15 +1537,15 @@ def log_me(verbosity, message):
     This function write logs
     """
     if verbosity == 'error':
-        logger.error(message)
+        LOGGER.error(message)
     elif verbosity == 'warning':
-        logger.warning(message)
+        LOGGER.warning(message)
     elif verbosity == 'info':
-        if cmdarg.printout_complete:
-            logger.info(message)
+        if CMDARG.printout_complete:
+            LOGGER.info(message)
     else:
-        if cmdarg.printout_debug:
-            logger.debug(message)
+        if CMDARG.printout_debug:
+            LOGGER.debug(message)
 
 def print_decoded(metadata, prefix=""):
     """
@@ -1545,208 +1553,199 @@ def print_decoded(metadata, prefix=""):
     """
     for i in metadata:
         if isinstance(i['value'], list):
-            log_me('info', '%s%s:' % (prefix, i['key']))
+            log_me("info", '%s%s:' % (prefix, i['key']))
             print_decoded(i['value'], prefix="    ")
         elif 'unit' in i:
-            log_me('info', '%s%s: %s %s' % (prefix, i['key'], i['value'], i['unit']))
+            log_me("info", '%s%s: %s %s' % (prefix, i['key'], i['value'], i['unit']))
         else:
-            log_me('info', '%s%s: %s' % (prefix, i['key'], i['value']))
+            log_me("info", '%s%s: %s' % (prefix, i['key'], i['value']))
 
 # ----------------------------------------------------------------------------
 
-def main():
 
-    global logger
-
-    # Get directory of the rfxcmd script
-    config.program_path = os.path.dirname(os.path.realpath(__file__))
-
-    parser = OptionParser()
-    parser.add_option("-d", "--device", action="store", type="string", dest="device", \
-        help="The serial device of the RFXCOM, example /dev/ttyUSB0")
-    parser.add_option("-l", "--listen", action="store_true", dest="listen", \
-        help="Listen for messages from RFX device")
-    parser.add_option("-x", "--simulate", action="store", type="string", dest="simulate", \
-        help="Simulate one incoming data message")
-    parser.add_option("-s", "--sendmsg", action="store", type="string", dest="sendmsg", \
-        help="Send one message to RFX device")
-    parser.add_option("-f", "--rfxstatus", action="store_true", dest="rfxstatus", \
-        help="Get RFX device status")
-    parser.add_option("-o", "--config", action="store", type="string", dest="config", \
-        help="Specify the configuration file")
-    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False, \
-        help="Output all messages to stdout")
-    parser.add_option("-c", "--csv", action="store_true", dest="csv", default=False, \
-        help="Output all messages to stdout in CSV format")
-    parser.add_option("-V", "--version", action="store_true", dest="version", \
-        help="Print rfxcmd version information")
-    parser.add_option("-D", "--debug", action="store_true", dest="debug", default=False, \
-        help="Debug printout on stdout")
-    parser.add_option("--listprotocol", action="store_true", dest="listprotocol", default=False, \
-        help="List protocol settings")
-    (options, _) = parser.parse_args()
-
-    # ----------------------------------------------------------
-    # VERSION PRINT
-    if options.version:
-        print_version()
-
-    # ----------------------------------------------------------
-    # CONFIG FILE
-    if options.config:
-        cmdarg.configfile = options.config
-    else:
-        cmdarg.configfile = os.path.join(config.program_path, "config.xml")
-
-    # ----------------------------------------------------------
-    # LOGHANDLER
-    logger = logger_init(cmdarg.configfile, 'rfxcmd', True)
-    cmdarg.printout_debug = False
-    cmdarg.printout_complete = False
-
-    if options.debug:
-        cmdarg.printout_debug = True
-        cmdarg.printout_complete = True
-        log_me('debug', "Debug printout " + _line())
-
-    if options.verbose:
-        cmdarg.printout_complete = True
-        log_me('info', "Verbose printout " + _line())
-        log_me('info', "RFXCMD Version " + __version__)
-
-    if not logger:
-        log_me('error', "Cannot find configuration file (%s)" % cmdarg.configfile)
-        exit(1)
-
-    log_me('debug', "Python version: %s.%s.%s" % sys.version_info[:3])
-    log_me('debug', "RFXCMD Version: " + __version__)
-    log_me('debug', __date__.replace('$', ''))
-
-    # ----------------------------------------------------------
-    # PROCESS CONFIG.XML
-    log_me('debug', "Configfile: " + cmdarg.configfile)
-    log_me('debug', "Read configuration file")
-    read_configfile()
-
-    # ----------------------------------------------------------
-    # OUTPUTOUTPUT
-    if options.csv:
-        log_me('debug', "CSV printout")
-        cmdarg.printout_csv = True
-    else:
-        cmdarg.printout_csv = False
-
-    # ----------------------------------------------------------
-    # Print protocol list
-    if options.listprotocol:
-        log_me('debug', "List protocol file to screen")
-        protocol.print_protocolfile(config.protocol_file)
-
-    # ----------------------------------------------------------
-    # WHITELIST
-    if config.whitelist_active:
-        log_me('debug', "Read whitelist file")
-        read_whitelistfile()
-
-    # ----------------------------------------------------------
-    # SERIAL
-    if options.device:
-        config.device = options.device
-    elif config.serial_device:
-        config.device = config.serial_device
-    else:
-        config.device = None
-
-    # ----------------------------------------------------------
-    # DAEMON
-    if config.daemon_active and options.listen:
-        log_me('debug', "Daemon")
-        log_me('debug', "Check PID file")
-
-        if config.daemon_pidfile:
-            cmdarg.pidfile = config.daemon_pidfile
-            cmdarg.createpid = True
-            log_me('debug', "PID file '" + cmdarg.pidfile + "'")
-
-            if os.path.exists(cmdarg.pidfile):
-                log_me('info', "PID file '" + cmdarg.pidfile + "' already exists. Exiting.")
-                log_me('debug', "PID file '" + cmdarg.pidfile + "' already exists.")
-                exit(1)
-            else:
-                log_me('debug', "PID file does not exists")
-
-        else:
-            log_me('error', "Command argument --pidfile missing. Line: " + _line())
-            exit(1)
-
-        log_me('debug', "Check platform")
-        if sys.platform == 'win32':
-            log_me('error', "Daemonize not supported under Windows. Line: " + _line())
-            exit(1)
-        else:
-            log_me('debug', "Platform: " + sys.platform)
-
-            try:
-                log_me('debug', "Write PID file")
-                file(cmdarg.pidfile, 'w').write("pid\n")
-            except IOError, err:
-                log_me('error', "Line: " + _line())
-                log_me('error', "Unable to write PID file: %s [%d]" % (err.strerror, err.errno))
-                raise SystemExit("Unable to write PID file: %s [%d]" % (err.strerror, err.errno))
-
-            log_me('debug', "Deactivate screen printouts")
-            cmdarg.printout_complete = False
-
-            log_me('debug', "Start daemon")
-            daemonize()
-
-    # ----------------------------------------------------------
-    # SIMULATE
-    if options.simulate:
-        option_simulate(options.simulate)
-
-    # ----------------------------------------------------------
-    # LISTEN
-    if options.listen:
-        option_listen()
-
-    # ----------------------------------------------------------
-    # SEND MESSAGE
-    if options.sendmsg:
-        cmdarg.rawcmd = options.sendmsg
-        option_send()
-
-    # ----------------------------------------------------------
-    # GET RFX STATUS
-    if options.rfxstatus:
-        cmdarg.rawcmd = rfxcmd.status
-        option_send()
-
-    log_me('debug', "Exit 0")
-    exit(0)
-
-# ------------------------------------------------------------------------------
-
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # Init shutdown handler
     signal(SIGINT, handler)
     signal(SIGTERM, handler)
 
     # Init objects
-    config = ConfigData()
-    cmdarg = CmdArgData()
-    rfx = lib.rfx_sensors.rfx_data()
-    rfxcmd = RfxCmdData()
-    serial_param = SerialData()
+    CONFIG = ConfigData()
+    CMDARG = CmdArgData()
+    RFX = lib.rfx_sensors.rfx_data()
+    RFXCMD = RfxCmdData()
+    SERIAL_PARAM = SerialData()
 
     # Whitelist
-    whitelist = WhitelistData()
+    WHITELIST = WhitelistData()
 
     # Check python version
     check_pythonversion()
 
-    main()
+    # Get directory of the rfxcmd script
+    CONFIG.program_path = os.path.dirname(os.path.realpath(__file__))
+
+    PARSER = ArgumentParser()
+    PARSER.add_argument("-d", "--device", action="store", dest="device", \
+        help="The serial device of the RFXCOM, example /dev/ttyUSB0")
+    PARSER.add_argument("-l", "--listen", action="store_true", dest="listen", \
+        help="Listen for messages from RFX device")
+    PARSER.add_argument("-x", "--simulate", action="store", dest="simulate", \
+        help="Simulate one incoming data message")
+    PARSER.add_argument("-s", "--sendmsg", action="store", dest="sendmsg", \
+        help="Send one message to RFX device")
+    PARSER.add_argument("-f", "--rfxstatus", action="store_true", dest="rfxstatus", \
+        help="Get RFX device status")
+    PARSER.add_argument("-o", "--config", action="store", dest="config", \
+        help="Specify the configuration file")
+    PARSER.add_argument("-v", "--verbose", action="store_true", dest="verbose", default=False, \
+        help="Output all messages to stdout")
+    PARSER.add_argument("-c", "--csv", action="store_true", dest="csv", default=False, \
+        help="Output all messages to stdout in CSV format")
+    PARSER.add_argument("-V", "--version", action="store_true", dest="version", \
+        help="Print rfxcmd version information")
+    PARSER.add_argument("-D", "--debug", action="store_true", dest="debug", default=False, \
+        help="Debug printout on stdout")
+    PARSER.add_argument("--listprotocol", action="store_true", dest="listprotocol", default=False, \
+        help="List protocol settings")
+    ARGS = PARSER.parse_args()
+
+    # ----------------------------------------------------------
+    # VERSION PRINT
+    if ARGS.version:
+        print_version()
+
+    # ----------------------------------------------------------
+    # CONFIG FILE
+    if ARGS.config:
+        CMDARG.configfile = ARGS.config
+    else:
+        CMDARG.configfile = os.path.join(CONFIG.program_path, "config.xml.sample")
+
+    # ----------------------------------------------------------
+    # LOGHANDLER
+    LOGGER = logger_init(CMDARG.configfile, "rfxcmd", True)
+
+    if ARGS.debug:
+        CMDARG.printout_debug = True
+        CMDARG.printout_complete = True
+        log_me("debug", "Debug printout " + _line())
+
+    if ARGS.verbose:
+        CMDARG.printout_complete = True
+        log_me("info", "Verbose printout " + _line())
+        log_me("info", "RFXCMD Version " + __version__)
+
+    if not LOGGER:
+        log_me("error", "Cannot find configuration file (%s)" % CMDARG.configfile)
+        exit(1)
+
+    log_me("debug", "Python version: %s.%s.%s" % sys.version_info[:3])
+    log_me("debug", "RFXCMD Version: " + __version__)
+    log_me("debug", __date__.replace('$', ''))
+
+    # ----------------------------------------------------------
+    # PROCESS CONFIG.XML
+    log_me("debug", "Configfile: " + CMDARG.configfile)
+    log_me("debug", "Read configuration file")
+    read_configfile()
+
+    # ----------------------------------------------------------
+    # OUTPUT
+    if ARGS.csv:
+        log_me("debug", "CSV printout")
+        CMDARG.printout_csv = True
+    else:
+        CMDARG.printout_csv = False
+
+    # ----------------------------------------------------------
+    # Print protocol list
+    if ARGS.listprotocol:
+        log_me("debug", "List protocol file to screen")
+        protocol.print_protocolfile(CONFIG.protocol_file)
+
+    # ----------------------------------------------------------
+    # WHITELIST
+    if CONFIG.whitelist_active:
+        log_me("debug", "Read whitelist file")
+        read_whitelistfile()
+
+    # ----------------------------------------------------------
+    # SERIAL
+    if ARGS.device:
+        CONFIG.device = ARGS.device
+    elif CONFIG.serial_device:
+        CONFIG.device = CONFIG.serial_device
+
+    # ----------------------------------------------------------
+    # DAEMON
+    if CONFIG.daemon_active and ARGS.listen:
+        log_me("debug", "Daemon")
+        log_me("debug", "Check PID file")
+
+        if CONFIG.daemon_pidfile:
+            CMDARG.pidfile = CONFIG.daemon_pidfile
+            CMDARG.createpid = True
+            log_me("debug", "PID file '" + CMDARG.pidfile + "'")
+
+            if os.path.exists(CMDARG.pidfile):
+                log_me("info", "PID file '" + CMDARG.pidfile + "' already exists. Exiting.")
+                log_me("debug", "PID file '" + CMDARG.pidfile + "' already exists.")
+                exit(1)
+            else:
+                log_me("debug", "PID file does not exists")
+
+        else:
+            log_me("error", "Command argument --pidfile missing. Line: " + _line())
+            exit(1)
+
+        log_me("debug", "Check platform")
+        if sys.platform == 'win32':
+            log_me("error", "Daemonize not supported under Windows. Line: " + _line())
+            exit(1)
+        else:
+            log_me("debug", "Platform: " + sys.platform)
+
+            try:
+                log_me("debug", "Write PID file")
+                PID_FILE = open(CMDARG.pidfile, "w")
+                PID_FILE.write("pid")
+                PID_FILE.close()
+            except IOError as err:
+                log_me("error", "Line: " + _line())
+                log_me("error", "Unable to write PID file: %s [%d]" % (err.strerror, err.errno))
+                raise SystemExit("Unable to write PID file: %s [%d]" % (err.strerror, err.errno))
+
+            log_me("debug", "Deactivate screen printouts")
+            CMDARG.printout_complete = False
+
+            log_me("debug", "Start daemon")
+            daemonize()
+
+    # ----------------------------------------------------------
+    # SIMULATE
+    if ARGS.simulate:
+        option_simulate(ARGS.simulate)
+
+    # ----------------------------------------------------------
+    # LISTEN
+    if ARGS.listen:
+        option_listen()
+
+    # ----------------------------------------------------------
+    # SEND MESSAGE
+    if ARGS.sendmsg:
+        CMDARG.rawcmd = ARGS.sendmsg
+        option_send()
+
+    # ----------------------------------------------------------
+    # GET RFX STATUS
+    if ARGS.rfxstatus:
+        CMDARG.rawcmd = RFXCMD.status
+        option_send()
+
+    log_me("debug", "Exit 0")
+    exit(0)
 
 # ------------------------------------------------------------------------------
 # END
