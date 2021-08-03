@@ -4,8 +4,6 @@ DESCRIPTION
 
 RFXcmd is Python script that interfaces the RFX USB devices from RFXcom http://www.rfxcom.com.
 
-All documents and other related to RFXcmd can be found at http://www.rfxcmd.eu
-
 REQUIREMENTS
 
 - Python 2.7, does not work with Python 3.x
