@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # coding=UTF-8
 
 # ------------------------------------------------------------------------------
@@ -28,6 +28,15 @@
 #
 # ------------------------------------------------------------------------------
 
+__author__ = "Sebastian Sjoholm"
+__copyright__ = "Copyright 2012-2014, Sebastian Sjoholm"
+__license__ = "GPL"
+__version__ = "2.0.0"
+__maintainer__ = "Nicolas Béguier"
+__date__ = "$Date: 2019-06-12 08:05:33 +0100 (Thu, 12 Jun 2019) $"
+
+from binascii import hexlify
+
 # --------------------------------------------------------------------------
 
 def stripped(str):
@@ -45,8 +54,12 @@ def ByteToHex( byteStr ):
 	http://code.activestate.com/recipes/510399-byte-to-hex-and-hex-to-byte-string-conversion/
 
 	Added str() to byteStr in case input data is in integer
-	"""	
-	return ''.join( [ "%02X " % ord( x ) for x in str(byteStr) ] ).strip()
+	"""
+	try:
+		return hexlify(byteStr).decode("utf-8")
+	except:
+		return "{0:#0{1}x}".format(byteStr, 4).split("0x")[1]
+	return "00"
 
 # ----------------------------------------------------------------------------
 

@@ -1,0 +1,42 @@
+<config>
+	<version>1</version>
+	
+	<!-- Serial -->
+	<serial_active>yes</serial_active>
+	<serial_device>/dev/ttyUSB0</serial_device>
+	<serial_rate>38400</serial_rate>
+	<serial_timeout>9</serial_timeout>
+
+	<!-- Process -->
+	<process_rfxmsg>yes</process_rfxmsg>
+
+	<!-- Daemon -->
+	<daemon_active>no</daemon_active>
+	<daemon_pidfile>/var/run/rfxcmd.pid</daemon_pidfile>
+		
+	<!-- Logging -->
+	<loglevel>error</loglevel>
+	<logfile>/var/log/rfxcmd.log</logfile>
+	<outputfile>/var/log/output.log</outputfile>
+		
+	<!-- Socket server -->
+	<socketserver>yes</socketserver>
+	<sockethost>localhost</sockethost>
+	<socketport>55000</socketport>
+	
+	<!-- Whitelist -->
+	<whitelist_active>no</whitelist_active>
+	<whitelist_file>whitelist.xml</whitelist_file>
+	
+	<!-- Barometric adjustemnt, only 0x54 -->
+	<barometric>0</barometric>
+	
+	<!-- Log messages -->
+	<log_msg>no</log_msg>
+	<log_msgfile>msg.log</log_msgfile>
+	
+	<!-- Protocol configuration -->
+	<protocol_startup>no</protocol_startup>
+	<protocol_file>protocol.xml</protocol_file>
+	
+</config>
