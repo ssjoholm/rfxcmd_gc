@@ -703,7 +703,7 @@ def decodePacket(message):
         decoded = True
         packettype = None
     
-    if packettype == '1A' and len(message) <> 13:
+    if packettype == '1A' and len(message) <> 14:
         logger.error("Packet has wrong length, discarding")
         decoded = True
         packettype = None
@@ -1822,16 +1822,16 @@ def decodePacket(message):
             pass
         
         if subtype == "00":
-            unitcode = ByteToHex(message[6])
+            unitcode = ByteToHex(message[7])
             if unitcode == "00":
                 unitcode_str = "All"
             else:
                 unitcode_str = str(unitcode)
         elif subtype == "01":
-            unitcode = ByteToHex(message[6])
+            unitcode = ByteToHex(message[7])
             unitcode_str = str(unitcode)
         
-        command = ByteToHex(message[7])
+        command = ByteToHex(message[8])
         try:
             command_str = rfx.rfx_subtype_1A_cmnd[command]
         except Exception as err:
@@ -1839,7 +1839,7 @@ def decodePacket(message):
             command_str = "Error: Unknown command received"
             pass
         
-        signal = rfxdecode.decodeSignal(message[8])
+        signal = rfxdecode.decodeSignal(message[9])
         
         # PRINTOUT
         if cmdarg.printout_complete:
